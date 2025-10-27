@@ -1,0 +1,66 @@
+# Firebase cache and debug files
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+
+
+# Dependencies
+# --------------------------------
+node_modules/
+bower_components
+.npm
+
+
+# Build & Output
+# --------------------------------
+dist
+dist-ssr
+build/Release
+lib-cov
+coverage
+.nyc_output
+*.tgz
+
+
+# Logs
+# --------------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+
+# OS & Editor
+# --------------------------------
+.DS_Store
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+
+# Runtime & Temp
+# --------------------------------
+*.local
+pids
+*.pid
+*.seed
+*.pid.lock
+.grunt
+.lock-wscript
+.eslintcache
+.node_repl_history
+.yarn-integrity
+
+
+server/node_modules/
+
+dist/
+build/
+
+server/serviceAccountKey.json
+server/.env
+server/.env.*
