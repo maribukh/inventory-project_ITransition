@@ -1,5 +1,63 @@
 import pool from "../utils/db.js";
 
+function mapSchemaToQuery(fieldsSchema) {
+  const updates = [];
+  const values = [];
+
+  const counters = {
+    string: 1,
+    text: 1,
+    number: 1,
+    boolean: 1,
+    link: 1,
+  };
+
+  const typesForReset = ["string", "text", "number", "boolean", "link"];
+  for (const type of typesForReset) {
+    for (let i = 1; i <= 3; i++) {
+      updates.push(`custom_${type}${i}_name = $${values.push(null)}`);
+      updates.push(`custom_${type}${i}_state = $${values.push(false)}`);
+    }
+  }
+
+  if (Array.isArray(fieldsSchema)) {
+    for (const field of fieldsSchema) {
+      const type = field.type;
+
+      if (!counters[type]) continue;
+
+      const count = counters[type];
+
+      if (count <= 3) {
+        updates.push(
+          `custom_${type}${count}_name = $${values.push(field.label)}`
+        );
+        updates.push(`custom_${type}${count}_state = $${values.push(true)}`);
+        counters[type]++;
+      }
+    }
+  }
+  return { updates, values };
+}
+
+function mapRowToSchema(inv) {
+  const fieldsSchema = [];
+  const types = ["string", "text", "number", "boolean", "link"];
+
+  for (const type of types) {
+    for (let i = 1; i <= 3; i++) {
+      if (inv[`custom_${type}${i}_state`] === true) {
+        fieldsSchema.push({
+          key: `custom_${type}${i}`,
+          label: inv[`custom_${type}${i}_name`],
+          type: type,
+        });
+      }
+    }
+  }
+  return fieldsSchema;
+}
+
 async function getInventories(req, res) {
   try {
     const uid = req.user.uid;
@@ -7,7 +65,13 @@ async function getInventories(req, res) {
       "SELECT * FROM inventories WHERE user_id = $1 ORDER BY created_at DESC",
       [uid]
     );
-    res.json(result.rows);
+
+    const inventories = result.rows.map((inv) => {
+      const fieldsSchema = mapRowToSchema(inv);
+      return { ...inv, fieldsSchema };
+    });
+
+    res.json(inventories);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "getInventories error" });
@@ -19,14 +83,26 @@ async function createInventory(req, res) {
     const uid = req.user.uid;
     const { name, description = "", fieldsSchema = [] } = req.body;
 
-    const result = await pool.query(
-      `INSERT INTO inventories (user_id, name, description, fields_schema)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`, 
-      [uid, name, description, JSON.stringify(fieldsSchema)] 
-    );
+    const { updates, values } = mapSchemaToQuery(fieldsSchema);
 
-    res.json(result.rows[0]);
+    const queryValues = [uid, name, description, ...values];
+
+    const columnNames = updates.map((u) => u.split(" = ")[0]).join(", ");
+    const valuePlaceholders = values.map((_, i) => `$${i + 4}`).join(", ");
+
+    const query = `
+      INSERT INTO inventories (user_id, name, description, ${columnNames})
+      VALUES ($1, $2, $3, ${valuePlaceholders})
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, queryValues);
+    const newInventory = result.rows[0];
+
+    res.json({
+      ...newInventory,
+      fieldsSchema: mapRowToSchema(newInventory),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "createInventory error" });
@@ -47,7 +123,11 @@ async function getInventory(req, res) {
       return res.status(404).json({ error: "Not found or forbidden" });
     }
 
-    res.json(result.rows[0]);
+    const inventory = result.rows[0];
+    res.json({
+      ...inventory,
+      fieldsSchema: mapRowToSchema(inventory),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "getInventory error" });
@@ -60,40 +140,37 @@ async function updateInventory(req, res) {
     const uid = req.user.uid;
     const { name, description, fieldsSchema } = req.body;
 
-    const updates = [];
-    const values = [inventoryId, uid];
+    const { updates, values } = mapSchemaToQuery(fieldsSchema);
 
     if (name !== undefined) {
-      values.push(name);
-      updates.push(`name = $${values.length}`);
+      updates.push(`name = $${values.push(name)}`);
     }
     if (description !== undefined) {
-      values.push(description);
-      updates.push(`description = $${values.length}`);
-    }
-    if (fieldsSchema !== undefined) {
-      values.push(JSON.stringify(fieldsSchema));
-      updates.push(`fields_schema = $${values.length}`);
+      updates.push(`description = $${values.push(description)}`);
     }
 
-    if (updates.length === 0) {
-      return res.status(400).json({ error: "No fields to update" });
-    }
+    values.push(inventoryId);
+    values.push(uid);
 
-    updates.push("updated_at = CURRENT_TIMESTAMP"); 
+    const query = `
+      UPDATE inventories
+      SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $${values.length - 1} AND user_id = $${values.length}
+      RETURNING *
+    `;
 
-    const result = await pool.query(
-      `UPDATE inventories SET ${updates.join(", ")}
-       WHERE id = $1 AND user_id = $2
-       RETURNING *`,
-      values
-    );
+    const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Not found or forbidden" });
     }
 
-    res.json(result.rows[0]);
+    const updatedInventory = result.rows[0];
+
+    res.json({
+      ...updatedInventory,
+      fieldsSchema: mapRowToSchema(updatedInventory),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "updateInventory error" });
@@ -104,7 +181,6 @@ async function deleteInventory(req, res) {
   try {
     const { inventoryId } = req.params;
     const uid = req.user.uid;
-
 
     const result = await pool.query(
       "DELETE FROM inventories WHERE id = $1 AND user_id = $2",

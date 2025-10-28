@@ -1,50 +1,57 @@
 import pool from "../utils/db.js";
 
-function buildSearchText(schema, data) {
-  let parts = [];
-  if (Array.isArray(schema)) {
-    schema.forEach((f) => {
-      const val = data[f.key];
-      if (val !== undefined && val !== null) parts.push(String(val));
-    });
-  } else {
-    Object.values(data).forEach((v) => parts.push(String(v)));
-  }
-  return parts.join(" ").toLowerCase();
-}
-
 async function checkInventoryOwner(inventoryId, userId) {
-  const result = await pool.query(
-    "SELECT user_id, fields_schema FROM inventories WHERE id = $1",
-    [inventoryId]
-  );
+  const result = await pool.query("SELECT * FROM inventories WHERE id = $1", [
+    inventoryId,
+  ]);
   const inv = result.rows[0];
   if (!inv) throw new Error("Inventory not found");
   if (inv.user_id !== userId) throw new Error("Forbidden");
-  return inv; 
+  return inv;
+}
+
+function buildSearchText(data) {
+  return Object.values(data)
+    .filter((v) => v !== null && v !== undefined)
+    .join(" ")
+    .toLowerCase();
 }
 
 async function createItem(req, res) {
   try {
     const uid = req.user.uid;
-    const { inventoryId, data } = req.body;
+    const { inventoryId, data, customId } = req.body;
+
     if (!inventoryId || !data)
       return res.status(400).json({ error: "Missing args" });
 
-    const inv = await checkInventoryOwner(inventoryId, uid);
+    await checkInventoryOwner(inventoryId, uid);
 
-    const searchText = buildSearchText(inv.fields_schema, data);
+    const dataForSql = {
+      ...data,
+      custom_id: customId || null,
+      inventory_id: inventoryId,
+      search_text: buildSearchText(data),
+    };
 
-    const result = await pool.query(
-      `INSERT INTO items (inventory_id, data, search_text)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [inventoryId, JSON.stringify(data), searchText]
-    );
+    const columns = Object.keys(dataForSql).join(", ");
+    const values = Object.values(dataForSql);
+    const valuePlaceholders = values.map((_, i) => `$${i + 1}`).join(", ");
+
+    const query = `
+      INSERT INTO items (${columns})
+      VALUES (${valuePlaceholders})
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
 
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "Custom ID already exists" });
+    }
     const status =
       err.message === "Forbidden"
         ? 403
@@ -69,12 +76,27 @@ async function getItems(req, res) {
       [inventoryId, limit]
     );
 
+    const types = ["string", "text", "number", "boolean", "link"];
+    const fieldsSchema = [];
+    for (const type of types) {
+      for (let i = 1; i <= 3; i++) {
+        if (inv[`custom_${type}${i}_state`] === true) {
+          fieldsSchema.push({
+            key: `custom_${type}${i}`,
+            label: inv[`custom_${type}${i}_name`],
+            type: type,
+          });
+        }
+      }
+    }
+
     res.json({
       items: itemsResult.rows,
       inventory: {
-        id: inventoryId,
-        user_id: inv.user_id,
-        fields_schema: inv.fields_schema,
+        id: inv.id,
+        name: inv.name,
+        description: inv.description,
+        fieldsSchema: fieldsSchema,
       },
     });
   } catch (err) {
@@ -86,6 +108,7 @@ async function getItems(req, res) {
         ? 404
         : 500;
     res.status(status).json({ error: err.message || "getItems error" });
+    G;
   }
 }
 
@@ -93,20 +116,38 @@ async function updateItem(req, res) {
   try {
     const uid = req.user.uid;
     const { itemId } = req.params;
-    const { inventoryId, data } = req.body;
+    const { inventoryId, data, customId } = req.body;
+
     if (!inventoryId || !itemId || !data)
       return res.status(400).json({ error: "Missing args" });
 
-    const inv = await checkInventoryOwner(inventoryId, uid);
+    await checkInventoryOwner(inventoryId, uid);
 
-    const searchText = buildSearchText(inv.fields_schema, data);
+    const dataForSql = {
+      ...data,
+      custom_id: customId || null,
+      search_text: buildSearchText(data),
+      updated_at: new Date(),
+    };
 
-    const result = await pool.query(
-      `UPDATE items SET data = $1, search_text = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3 AND inventory_id = $4
-       RETURNING *`,
-      [JSON.stringify(data), searchText, itemId, inventoryId]
-    );
+    const columns = Object.keys(dataForSql);
+    const values = Object.values(dataForSql);
+
+    const setClause = columns
+      .map((col, i) => `"${col}" = $${i + 1}`)
+      .join(", ");
+
+    values.push(itemId);
+    values.push(inventoryId);
+
+    const query = `
+      UPDATE items
+      SET ${setClause}
+      WHERE id = $${values.length - 1} AND inventory_id = $${values.length}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Item not found" });
@@ -115,6 +156,9 @@ async function updateItem(req, res) {
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "Custom ID already exists" });
+    }
     const status =
       err.message === "Forbidden"
         ? 403
@@ -128,7 +172,7 @@ async function updateItem(req, res) {
 async function deleteItem(req, res) {
   try {
     const uid = req.user.uid;
-    const { inventoryId } = req.body; 
+    const { inventoryId } = req.body;
     const { itemId } = req.params;
     if (!inventoryId || !itemId)
       return res.status(400).json({ error: "Missing args" });
