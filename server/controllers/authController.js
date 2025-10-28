@@ -1,4 +1,3 @@
-// [file name]: server/controllers/authController.js
 import pool from "../utils/db.js";
 
 async function createUserRecord(req, res) {
@@ -19,7 +18,7 @@ async function createUserRecord(req, res) {
     const newUser = await pool.query(
       `INSERT INTO users (uid, email, is_admin)
        VALUES ($1, $2, $3)
-       ON CONFLICT(uid) DO NOTHING
+       ON CONFLICT(email) DO NOTHING
        RETURNING *`,
       [uid, email, isAdmin]
     );
@@ -38,6 +37,16 @@ async function createUserRecord(req, res) {
         "SELECT is_admin FROM users WHERE uid = $1",
         [uid]
       );
+
+      if (existingUser.rows.length === 0) {
+        console.log("❌ User exists with different UID (email conflict)");
+        return res
+          .status(409)
+          .json({
+            error: "Email already associated with another user account.",
+          });
+      }
+
       console.log("✅ User record already exists");
       return res.json({
         success: true,

@@ -5,7 +5,7 @@ const LanguageContext = createContext();
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {
     const saved = localStorage.getItem("language");
-    return saved || "en";
+    return saved || "en"; 
   });
 
   useEffect(() => {
@@ -14,11 +14,17 @@ export function LanguageProvider({ children }) {
 
   const toggleLanguage = (lang) => {
     setLanguage(lang);
+  }; 
+
+  const value = {
+    language,
+    toggleLanguage,
+    t: translations[language],
   };
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage }}>
-      {children}
+    <LanguageContext.Provider value={value}>
+            {children}   {" "}
     </LanguageContext.Provider>
   );
 }
@@ -31,16 +37,14 @@ export function useLanguage() {
   return context;
 }
 
-
 export const translations = {
   en: {
     // Navbar
     signIn: "Sign in",
     getStarted: "Get started",
     signOut: "Sign out",
-    manage: "Manage",
+    manage: "Manage", 
 
-    // Login
     signInToAccount: "Sign in to your account",
     createNewAccount: "create a new account",
     continueWithGoogle: "Continue with Google",
@@ -51,7 +55,6 @@ export const translations = {
     welcomeBack: "Welcome back!",
     dontHaveAccount: "Don't have an account?",
 
-    // Register
     joinInventoro: "Join Inventoro",
     alreadyHaveAccount: "Already have an account?",
     signInHere: "Sign in here",
@@ -62,12 +65,10 @@ export const translations = {
     byCreatingAccount: "By creating an account, you agree to our",
     termsOfService: "Terms of Service",
     and: "and",
-    privacyPolicy: "Privacy Policy",
+    privacyPolicy: "Privacy Policy", 
 
-    // Dashboard
     myInventories: "My Inventories",
     newInventory: "New Inventory",
-    cancel: "Cancel",
     createNewInventory: "Create New Inventory",
     inventoryName: "Inventory Name",
     description: "Description",
@@ -75,27 +76,49 @@ export const translations = {
     fieldConfiguration: "Field Configuration",
     dragToReorder: "Drag to reorder",
     createInventory: "Create Inventory",
-    creating: "Creating...",
     yourInventories: "Your Inventories",
     noInventories: "No inventories yet",
     createFirstInventory: "Create your first inventory to get started",
     fields: "fields",
 
-    // Common
+    itemCreatedSuccess: "Item created successfully!",
+    itemCreatedError: "Failed to create item",
+    itemsDeletedSuccess: "Items deleted successfully!",
+    itemsDeletedError: "Failed to delete items",
+    confirmDeleteItems: "Are you sure you want to delete {count} item(s)?",
+    loadingInventory: "Loading inventory...",
+    inventoryNotFound: "Inventory not found",
+    itemsCount: "items",
+    addNewItem: "Add New Item",
+    customIdOptional: "Custom ID (optional)",
+    customIdPlaceholder: "Enter custom ID...",
+    yes: "Yes",
+    no: "No",
+    creating: "Creating...",
+    createItem: "Create Item",
+    itemsSelected: "item(s) selected",
+    deleting: "Deleting...",
+    deleteSelected: "Delete Selected",
+    items: "Items",
+    searchItemsPlaceholder: "Search items...",
+    customId: "Custom ID",
+    noItemsFound: "No items found",
+    openLink: "Open Link", 
+
     loading: "Loading...",
     error: "Error",
     success: "Success",
     required: "is required",
     invalidEmail: "Email is invalid",
+    cancel: "Cancel", 
   },
   ru: {
     // Navbar
     signIn: "Войти",
     getStarted: "Начать",
     signOut: "Выйти",
-    manage: "Управлять",
+    manage: "Управлять", 
 
-    // Login
     signInToAccount: "Войдите в свой аккаунт",
     createNewAccount: "создать новый аккаунт",
     continueWithGoogle: "Продолжить с Google",
@@ -104,9 +127,8 @@ export const translations = {
     password: "Пароль",
     signingIn: "Вход...",
     welcomeBack: "С возвращением!",
-    dontHaveAccount: "Нет аккаунта?",
+    dontHaveAccount: "Нет аккаунта?", 
 
-    // Register
     joinInventoro: "Присоединяйтесь к Inventoro",
     alreadyHaveAccount: "Уже есть аккаунт?",
     signInHere: "Войдите здесь",
@@ -117,12 +139,10 @@ export const translations = {
     byCreatingAccount: "Создавая аккаунт, вы соглашаетесь с нашими",
     termsOfService: "Условиями обслуживания",
     and: "и",
-    privacyPolicy: "Политикой конфиденциальности",
+    privacyPolicy: "Политикой конфиденциальности", 
 
-    // Dashboard
     myInventories: "Мои инвентари",
     newInventory: "Новый инвентарь",
-    cancel: "Отмена",
     createNewInventory: "Создать новый инвентарь",
     inventoryName: "Название инвентаря",
     description: "Описание",
@@ -130,17 +150,40 @@ export const translations = {
     fieldConfiguration: "Настройка полей",
     dragToReorder: "Перетащите для изменения порядка",
     createInventory: "Создать инвентарь",
-    creating: "Создание...",
     yourInventories: "Ваши инвентари",
     noInventories: "Инвентарей пока нет",
     createFirstInventory: "Создайте первый инвентарь чтобы начать",
-    fields: "поля",
+    fields: "поля", 
 
-    // Common
+    itemCreatedSuccess: "Элемент успешно создан!",
+    itemCreatedError: "Ошибка создания элемента",
+    itemsDeletedSuccess: "Элементы успешно удалены!",
+    itemsDeletedError: "Ошибка удаления элементов",
+    confirmDeleteItems: "Вы уверены, что хотите удалить {count} эл-т(ов)?",
+    loadingInventory: "Загрузка инвентаря...",
+    inventoryNotFound: "Инвентарь не найден",
+    itemsCount: "эл-тов",
+    addNewItem: "Добавить новый элемент",
+    customIdOptional: "Свой ID (необязательно)",
+    customIdPlaceholder: "Введите свой ID...",
+    yes: "Да",
+    no: "Нет",
+    creating: "Создание...",
+    createItem: "Создать элемент",
+    itemsSelected: "выбрано",
+    deleting: "Удаление...",
+    deleteSelected: "Удалить выбранное",
+    items: "Элементы",
+    searchItemsPlaceholder: "Поиск элементов...",
+    customId: "Свой ID",
+    noItemsFound: "Элементы не найдены",
+    openLink: "Открыть ссылку", 
+
     loading: "Загрузка...",
     error: "Ошибка",
     success: "Успех",
     required: "обязателен",
     invalidEmail: "Неверный email",
+    cancel: "Отмена", 
   },
 };

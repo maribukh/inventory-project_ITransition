@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getItems, createItem, deleteItem } from "../utils/api";
 import Fuse from "fuse.js";
 import toast from "react-hot-toast";
+import { useLanguage } from "../hooks/useLanguage";
 
 export default function InventoryPage() {
   const { id: inventoryId } = useParams();
@@ -12,6 +13,8 @@ export default function InventoryPage() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [newItemValues, setNewItemValues] = useState({});
   const [customId, setCustomId] = useState("");
+
+  const { t } = useLanguage();
 
   const queryClient = useQueryClient();
 
@@ -26,11 +29,11 @@ export default function InventoryPage() {
       createItem(inventoryId, { ...data, customId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items", inventoryId] });
-      toast.success("Item created successfully!");
+      toast.success(t.itemCreatedSuccess);
       resetForm();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create item");
+      toast.error(error.message || t.itemCreatedError);
     },
   });
 
@@ -40,10 +43,10 @@ export default function InventoryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items", inventoryId] });
       setSelectedIds(new Set());
-      toast.success("Items deleted successfully!");
+      toast.success(t.itemsDeletedSuccess);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete items");
+      toast.error(error.message || t.itemsDeletedError);
     },
   });
 
@@ -120,9 +123,12 @@ export default function InventoryPage() {
   function onDeleteSelected() {
     if (selectedIds.size === 0) return;
 
-    if (
-      !confirm(`Are you sure you want to delete ${selectedIds.size} item(s)?`)
-    ) {
+    const confirmMsg = t.confirmDeleteItems.replace(
+      "{count}",
+      selectedIds.size
+    );
+
+    if (!window.confirm(confirmMsg)) {
       return;
     }
 
@@ -139,152 +145,207 @@ export default function InventoryPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-64">
-        <div className="text-lg">Loading inventory...</div>
+                <div className="text-lg">{t.loadingInventory}</div>     {" "}
       </div>
     );
   }
 
   if (!inventoryData?.inventory) {
-    return <div className="text-red-500">Inventory not found</div>;
+    return <div className="text-red-500">{t.inventoryNotFound}</div>;
   }
 
   const { inventory, items = [] } = inventoryData;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {inventory.name}
+    <div className="space-y-6 p-4 md:p-6">
+           {" "}
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-2">
+               {" "}
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                    {inventory.name}       {" "}
         </h2>
+               {" "}
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {items.length} items
+                    {items.length} {t.itemsCount}       {" "}
         </div>
+             {" "}
       </div>
-
+           {" "}
       {inventory.description && (
         <p className="text-gray-600 dark:text-gray-300">
-          {inventory.description}
+                    {inventory.description}       {" "}
         </p>
       )}
-
-      {/* Create Item Form */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+           {" "}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+               {" "}
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-          Add New Item
+                    {t.addNewItem}       {" "}
         </h3>
+               {" "}
         <form onSubmit={onCreate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Custom ID (optional)
-            </label>
-            <input
-              value={customId}
-              onChange={(e) => setCustomId(e.target.value)}
-              placeholder="Enter custom ID..."
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          {inventory.fieldsSchema.map((field) => (
-            <div key={field.key}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {field.label} ({field.type})
+                   {" "}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {" "}
+            <div>
+                           {" "}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {t.customIdOptional}             {" "}
               </label>
-              {field.type === "text" ? (
-                <textarea
-                  value={newItemValues[field.key] || ""}
-                  onChange={(e) =>
-                    updateNewItemValue(field.key, e.target.value)
-                  }
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  rows={3}
-                />
-              ) : field.type === "boolean" ? (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={newItemValues[field.key] || false}
-                    onChange={(e) =>
-                      updateNewItemValue(field.key, e.target.checked)
-                    }
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-gray-700 dark:text-gray-300">
-                    Yes
-                  </span>
-                </div>
-              ) : (
-                <input
-                  type={field.type === "number" ? "number" : "text"}
-                  value={newItemValues[field.key] || ""}
-                  onChange={(e) =>
-                    updateNewItemValue(field.key, e.target.value)
-                  }
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              )}
+                           {" "}
+              <input
+                value={customId}
+                onChange={(e) => setCustomId(e.target.value)}
+                placeholder={t.customIdPlaceholder}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+              />
+                         {" "}
             </div>
-          ))}
-
-          <button
-            type="submit"
-            disabled={createItemMutation.isPending}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
-          >
-            {createItemMutation.isPending ? "Creating..." : "Create Item"}
-          </button>
-        </form>
-      </div>
-
-      {/* Contextual Action Bar */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex items-center space-x-4">
-            <span className="text-blue-700 dark:text-blue-300 font-medium">
-              {selectedIds.size} item(s) selected
-            </span>
+                       {" "}
+            {inventory.fieldsSchema.map((field) => (
+              <div key={field.key}>
+                               {" "}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {field.label}{" "}
+                  <span className="text-xs text-gray-500">({field.type})</span> 
+                               {" "}
+                </label>
+                               {" "}
+                {field.type === "text" ? (
+                  <textarea
+                    value={newItemValues[field.key] || ""}
+                    onChange={(e) =>
+                      updateNewItemValue(field.key, e.target.value)
+                    }
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    rows={3}
+                  />
+                ) : field.type === "boolean" ? (
+                  <div className="flex items-center h-10">
+                                       {" "}
+                    <input
+                      id={`checkbox-${field.key}`}
+                      type="checkbox"
+                      checked={newItemValues[field.key] || false}
+                      onChange={(e) =>
+                        updateNewItemValue(field.key, e.target.checked)
+                      }
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                                   {" "}
+                    <label
+                      htmlFor={`checkbox-${field.key}`}
+                      className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                    >
+                                      {t.yes}             {" "}
+                    </label>
+                                 {" "}
+                  </div>
+                ) : (
+                  <input
+                    type={field.type === "number" ? "number" : "text"}
+                    value={newItemValues[field.key] || ""}
+                    onChange={(e) =>
+                      updateNewItemValue(field.key, e.target.value)
+                    }
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  />
+                )}
+                         {" "}
+              </div>
+            ))}
+               {" "}
           </div>
-          <div className="flex items-center space-x-2">
+             {" "}
+          <div className="flex justify-end pt-2">
+               {" "}
+            <button
+              type="submit"
+              disabled={createItemMutation.isPending}
+              className="px-5 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+            >
+                  {createItemMutation.isPending ? t.creating : t.createItem}   {" "}
+            </button>
+               {" "}
+          </div>
+             {" "}
+        </form>
+         {" "}
+      </div>
+       {" "}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between p-3 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
+           {" "}
+          <div className="flex items-center space-x-2 md:space-x-4">
+             {" "}
+            <span className="text-blue-700 dark:text-blue-300 font-medium text-sm md:text-base">
+                {selectedIds.size} {t.itemsSelected} {" "}
+            </span>
+             {" "}
+          </div>
+           {" "}
+          <div className="flex items-center space-x-1 md:space-x-2">
+                     {" "}
+            <button
+              disabled={selectedIds.size !== 1 || deleteItemsMutation.isPending}
+              className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+            >
+                      Редакт.        {" "}
+            </button>
+             {" "}
             <button
               onClick={onDeleteSelected}
               disabled={deleteItemsMutation.isPending}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
             >
-              {deleteItemsMutation.isPending
-                ? "Deleting..."
-                : "Delete Selected"}
+                       {" "}
+              {deleteItemsMutation.isPending ? t.deleting : t.deleteSelected}   
+                   {" "}
             </button>
+                     {" "}
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
-              Cancel
+                      {t.cancel}       {" "}
             </button>
+                   {" "}
           </div>
+               {" "}
         </div>
       )}
-
-      {/* Items Table */}
+         {" "}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+             {" "}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Items
+                 {" "}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                     {" "}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white shrink-0">
+                        {t.items}         {" "}
             </h3>
+                     {" "}
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search items..."
-              className="p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-64"
+              placeholder={t.searchItemsPlaceholder}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full md:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
             />
+                 {" "}
           </div>
+             {" "}
         </div>
-
+           {" "}
         <div className="overflow-x-auto">
-          <table className="w-full">
+             {" "}
+          <table className="w-full min-w-[600px]">
+               {" "}
             <thead className="bg-gray-50 dark:bg-gray-700">
+                 {" "}
               <tr>
-                <th className="p-3 border-b border-gray-200 dark:border-gray-600">
+                   {" "}
+                <th className="p-3 w-12 border-b border-gray-200 dark:border-gray-600">
+                     {" "}
                   <input
                     type="checkbox"
                     checked={
@@ -294,80 +355,109 @@ export default function InventoryPage() {
                     onChange={toggleSelectAll}
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
+                     {" "}
                 </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600">
-                  #
+                   {" "}
+                <th className="p-3 w-12 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600">
+                      #    {" "}
                 </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600">
-                  Custom ID
+                   {" "}
+                <th className="p-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600">
+                      {t.customId}   {" "}
                 </th>
+                   {" "}
                 {inventory.fieldsSchema.map((f) => (
                   <th
                     key={f.key}
-                    className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600"
+                    className="p-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600"
                   >
-                    {f.label}
+                        {f.label}   {" "}
                   </th>
                 ))}
+                   {" "}
               </tr>
+                 {" "}
             </thead>
+               {" "}
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                 {" "}
+              {filtered.length === 0 && (
+                <tr>
+                     {" "}
+                  <td
+                    colSpan={3 + inventory.fieldsSchema.length}
+                    className="text-center py-8 text-gray-500 dark:text-gray-400"
+                  >
+                        {t.noItemsFound}   {" "}
+                  </td>
+                     {" "}
+                </tr>
+              )}
+                 {" "}
               {filtered.map((item, idx) => (
                 <tr
                   key={item.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
                     selectedIds.has(item.id)
-                      ? "bg-blue-50 dark:bg-blue-900/20"
+                      ? "bg-blue-50 dark:bg-blue-900/30"
                       : ""
                   }`}
                 >
+                     {" "}
                   <td className="p-3">
+                       {" "}
                     <input
                       type="checkbox"
                       checked={selectedIds.has(item.id)}
                       onChange={() => toggleSelect(item.id)}
                       className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                     />
+                       {" "}
                   </td>
-                  <td className="p-3 text-sm text-gray-900 dark:text-white">
-                    {idx + 1}
+                     {" "}
+                  <td className="p-3 text-sm text-gray-500 dark:text-gray-400">
+                        {idx + 1}   {" "}
                   </td>
-                  <td className="p-3 text-sm text-gray-900 dark:text-white">
-                    {item.customId || "-"}
+                     {" "}
+                  <td className="p-3 text-sm font-medium text-gray-900 dark:text-white">
+                       {" "}
+                    {item.customId || <span className="text-gray-400">-</span>} 
+                     {" "}
                   </td>
+                     {" "}
                   {inventory.fieldsSchema.map((f) => (
                     <td
                       key={f.key}
-                      className="p-3 text-sm text-gray-900 dark:text-white"
+                      className="p-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap"
                     >
-                      {renderCell(item[f.key], f)}
+                          {renderCell(item[f.key], f, t)}   {" "}
                     </td>
                   ))}
+                     {" "}
                 </tr>
               ))}
+                 {" "}
             </tbody>
+               {" "}
           </table>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              No items found
-            </div>
-          )}
+             {" "}
         </div>
+         {" "}
       </div>
+       {" "}
     </div>
   );
 }
 
-function renderCell(value, field) {
+function renderCell(value, field, t) {
   if (field.type === "boolean") {
     return value ? (
-      <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-        Yes
+      <span className="inline-flex items-center px-2.5 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full dark:bg-green-900 dark:text-green-300">
+          {t.yes} {" "}
       </span>
     ) : (
-      <span className="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-        No
+      <span className="inline-flex items-center px-2.5 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded-full dark:bg-red-900 dark:text-red-300">
+          {t.no} {" "}
       </span>
     );
   }
@@ -375,18 +465,18 @@ function renderCell(value, field) {
   if (field.type === "link" && value) {
     return (
       <a
-        href={value}
+        href={value.startsWith("http") ? value : `https://${value}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline transition-colors"
       >
-        Open Link
+          {t.openLink} {" "}
       </a>
     );
   }
 
   if (value === undefined || value === null || value === "") {
-    return <span className="text-gray-400">-</span>;
+    return <span className="text-gray-400 dark:text-gray-500">-</span>;
   }
 
   return String(value);
