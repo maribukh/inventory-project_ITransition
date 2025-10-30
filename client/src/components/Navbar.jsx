@@ -5,7 +5,6 @@ import { signOut } from "firebase/auth";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import { useLanguage, translations } from "../hooks/useLanguage";
-import { useAdmin } from "../hooks/useAdmin"; 
 import { Menu, Transition } from "@headlessui/react";
 import toast from "react-hot-toast";
 import {
@@ -14,14 +13,13 @@ import {
   SunIcon,
   MoonIcon,
   GlobeAltIcon,
-  CogIcon, 
+  CogIcon,
 } from "@heroicons/react/20/solid";
 import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useAdmin();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage } = useLanguage();
   const t = translations[language];
@@ -155,7 +153,7 @@ export default function Navbar() {
                   leaveTo="transform opacity-0 scale-95"
                 >
                   <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white/95 dark:bg-gray-700/95 backdrop-blur-md py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-600">
-                    {!adminLoading && isAdmin && (
+                    {isAdmin && (
                       <Menu.Item>
                         {({ active }) => (
                           <Link

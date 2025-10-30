@@ -5,10 +5,10 @@ async function globalSearch(req, res) {
     const uid = req.user.uid;
     const { q, limit = 50 } = req.query;
     if (!q || q.trim().length < 2) {
-      return res.status(400).json({ error: "Search query too short" });
+      return res.status(400).json({ error: "Search query is too short" });
     }
 
-    const searchTerm = `%${q.toLowerCase().trim()}%`;
+    const searchTerm = q.trim();
 
     const result = await pool.query(
       `SELECT
@@ -21,7 +21,7 @@ async function globalSearch(req, res) {
        JOIN inventories inv ON i.inventory_id = inv.id
        WHERE
           inv.user_id = $1
-          AND i.search_text ILIKE $2
+          AND to_tsvector('simple', i.search_text) @@ plainto_tsquery('simple', $2)
        ORDER BY i.created_at DESC
        LIMIT $3`,
       [uid, searchTerm, limit]

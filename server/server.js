@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import inventoriesRoutes from "./routes/inventories.js";
 import itemsRoutes from "./routes/items.js";
 import searchRoutes from "./routes/search.js";
-import usersRoutes from "./routes/users.js";
+import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 
 dotenv.config();
@@ -16,7 +16,7 @@ app.use(express.json());
 app.use("/api/inventories", inventoriesRoutes);
 app.use("/api/items", itemsRoutes);
 app.use("/api/search", searchRoutes);
-app.use("/api/admin/users", usersRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
@@ -36,8 +36,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Database: Firebase Firestore`);
+  console.log(`📊 Database: PostgreSQL`);
   console.log(`🔗 Health check: http://localhost:${PORT}/`);
   console.log(`🔍 Search API: http://localhost:${PORT}/api/search`);
-  console.log(`👑 Admin API: http://localhost:${PORT}/api/admin/users`);
+  console.log(`👑 Admin API: http://localhost:${PORT}/api/admin`);
 });

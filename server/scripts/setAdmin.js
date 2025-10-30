@@ -1,53 +1,51 @@
-// [file name]: scripts/setAdmin.js
-// Admin setup script for ES modules
-
+import pool from "../utils/db.js";
 import { admin } from "../admin.config.js";
 
 async function setUserAsAdmin(userUid) {
   try {
-    // Получаем информацию о пользователе
     const user = await admin.auth().getUser(userUid);
-
-    console.log("👤 Найден пользователь:");
+    console.log("👤 User found in Firebase Auth:");
     console.log(`   Email: ${user.email}`);
     console.log(`   UID: ${user.uid}`);
 
-    // Создаем/обновляем запись в Firestore с правами админа
-    await admin.firestore().collection("users").doc(userUid).set(
-      {
-        email: user.email,
-        isAdmin: true,
-        isBlocked: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const checkResult = await pool.query("SELECT * FROM users WHERE uid = $1", [
+      userUid,
+    ]);
 
-    console.log("✅ Пользователь успешно назначен администратором!");
+    if (checkResult.rows.length === 0) {
+      console.log(
+        "❌ Error: User EXISTS in Firebase, but NOT in our PostgreSQL database."
+      );
+      console.log(
+        "   Solution: Ask the user to log in to the application at least once."
+      );
+      return;
+    }
+
+    await pool.query("UPDATE users SET is_admin = true WHERE uid = $1", [
+      userUid,
+    ]);
+
+    console.log("✅ User successfully set as administrator in PostgreSQL!");
     console.log(
-      "🎉 Теперь он может зайти в админ-панель через меню пользователя"
+      "🎉 Now they can access the admin panel (after token refresh/re-login)."
     );
   } catch (error) {
-    console.error("❌ Ошибка назначения админа:", error);
-
+    console.error("❌ Error setting admin:", error);
     if (error.code === "auth/user-not-found") {
       console.log(
-        "⚠️  Пользователь с таким UID не найден в Firebase Authentication"
-      );
-    } else if (error.code === 5) {
-      console.log(
-        "⚠️  Ошибка доступа к Firestore. Проверьте настройки Firebase Admin SDK"
+        "⚠️   User with this UID not found in Firebase Authentication"
       );
     }
+  } finally {
+    await pool.end();
   }
 }
 
-// Запуск: node scripts/setAdmin.js xoOAVu44AlOwJYU4wDTQ53K3ZTk1
 const userUid = process.argv[2];
 if (userUid) {
   setUserAsAdmin(userUid);
 } else {
-  console.log("❌ Укажите UID пользователя: node setAdmin.js USER_UID");
-  console.log("   Пример: node setAdmin.js xoOAVu44AlOwJYU4wDTQ53K3ZTk1");
+  console.log("❌ Provide the user UID: node setAdmin.js USER_UID");
+  console.log("   Example: node setAdmin.js xoOAVu44AlOwJYU4wDTQ53K3ZTk1");
 }

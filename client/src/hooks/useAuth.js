@@ -5,6 +5,7 @@ import { createUserRecordAPI } from "../utils/api";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,13 +15,21 @@ export function useAuth() {
 
         try {
           console.log("🔄 Creating user record for:", user.email);
-          await createUserRecordAPI();
-          console.log("✅ User record created/verified");
+          const res = await createUserRecordAPI();
+          if (res.isAdmin) {
+            setIsAdmin(true);
+          }
+          console.log(
+            "✅ User record created/verified. Admin status:",
+            res.isAdmin
+          );
         } catch (error) {
           console.error("❌ Failed to create user record:", error);
+          setIsAdmin(false);
         }
       } else {
         setUser(null);
+        setIsAdmin(false); 
       }
 
       setLoading(false);
@@ -29,5 +38,5 @@ export function useAuth() {
     return unsubscribe;
   }, []);
 
-  return { user, loading };
+  return { user, isAdmin, loading };
 }

@@ -1,4 +1,4 @@
-import { admin } from "../admin.config.js"; 
+import { admin } from "../admin.config.js";
 import pool from "../utils/db.js";
 
 async function getAllUsers(req, res) {
@@ -58,10 +58,6 @@ async function deleteUser(req, res) {
     const { uid } = req.params;
 
     await admin.auth().deleteUser(uid);
-
-
-    await pool.query("DELETE FROM inventories WHERE user_id = $1", [uid]);
-
 
     await pool.query("DELETE FROM users WHERE uid = $1", [uid]);
 

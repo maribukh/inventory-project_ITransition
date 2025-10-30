@@ -1,73 +1,60 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import { LanguageProvider } from "./hooks/useLanguage";
+
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+
 import Dashboard from "./pages/Dashboard";
 import InventoryPage from "./pages/InventoryPage";
 import AdminPage from "./pages/AdminPage";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { ThemeProvider } from "./hooks/useTheme";
-import { LanguageProvider } from "./hooks/useLanguage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-export default function App() {
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 4000,
-              className: "dark:bg-gray-800 dark:text-white",
-            }}
-          />
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-            <Navbar />
-            <main className="container mx-auto p-4">
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/inventory/:id"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-              </Routes>
-            </main>
-          </div>
-        </LanguageProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/:id"
+              element={
+                <ProtectedRoute>
+                  <InventoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
+
+            <Route path="*" element={<div>404 - Page Not Found</div>} />
+          </Routes>
+        </main>
+        <Toaster position="bottom-right" />
+      </div>
+    </LanguageProvider>
   );
 }
+
+export default App;
