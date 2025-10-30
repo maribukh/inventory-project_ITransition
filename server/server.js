@@ -6,6 +6,7 @@ import itemsRoutes from "./routes/items.js";
 import searchRoutes from "./routes/search.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
+import pool from "./utils/db.js";
 
 dotenv.config();
 
@@ -18,6 +19,23 @@ app.use("/api/items", itemsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
+
+app.get("/api/debug/db", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT NOW() as time, version() as version"
+    );
+    res.json({
+      ok: true,
+      database: "PostgreSQL",
+      time: result.rows[0].time,
+      version: result.rows[0].version,
+    });
+  } catch (error) {
+    console.error("Database connection error:", error);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.json({

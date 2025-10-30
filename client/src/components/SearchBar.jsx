@@ -12,7 +12,6 @@ export default function SearchBar() {
   const t = translations[language];
   const searchRef = useRef(null);
 
-
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -81,7 +80,7 @@ export default function SearchBar() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {item.customId || `Item #${item.id.slice(-4)}`}
+                        {item.customId || `Item #${item.id}`}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {item.inventoryName}

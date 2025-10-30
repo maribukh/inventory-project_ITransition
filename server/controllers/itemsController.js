@@ -39,10 +39,10 @@ async function createItem(req, res) {
     const valuePlaceholders = values.map((_, i) => `$${i + 1}`).join(", ");
 
     const query = `
-      INSERT INTO items (${columns})
-      VALUES (${valuePlaceholders})
-      RETURNING *
-    `;
+      INSERT INTO items (${columns})
+      VALUES (${valuePlaceholders})
+      RETURNING *
+    `;
 
     const result = await pool.query(query, values);
 
@@ -108,7 +108,6 @@ async function getItems(req, res) {
         ? 404
         : 500;
     res.status(status).json({ error: err.message || "getItems error" });
-    G;
   }
 }
 
@@ -141,11 +140,11 @@ async function updateItem(req, res) {
     values.push(inventoryId);
 
     const query = `
-      UPDATE items
-      SET ${setClause}
-      WHERE id = $${values.length - 1} AND inventory_id = $${values.length}
-      RETURNING *
-    `;
+      UPDATE items
+      SET ${setClause}
+      WHERE id = $${values.length - 1} AND inventory_id = $${values.length}
+      RETURNING *
+    `;
 
     const result = await pool.query(query, values);
 

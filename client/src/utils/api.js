@@ -4,7 +4,7 @@ async function getIdToken() {
   const user = auth.currentUser;
   if (!user) throw new Error("No authenticated user");
   try {
-    return await user.getIdToken(true); 
+    return await user.getIdToken(true);
   } catch (error) {
     console.error("Error getting ID token:", error);
     throw new Error("Could not verify user session.");
@@ -17,8 +17,8 @@ async function fetchWithAuth(url, opts = {}) {
     token = await getIdToken();
   } catch (error) {
     console.error("Authentication error:", error.message);
-    window.location.href = '/login'; 
-    throw error; 
+    window.location.href = "/login";
+    throw error;
   }
 
   const headers = {
@@ -31,23 +31,27 @@ async function fetchWithAuth(url, opts = {}) {
   const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
   try {
-    const response = await fetch(`${API_BASE}${url}`, config); 
+    const response = await fetch(`${API_BASE}${url}`, config);
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: response.statusText }));
       console.error("API Error:", {
         status: response.status,
         statusText: response.statusText,
         url,
         errorData,
       });
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") !== -1) {
-       return await response.json();
+      return await response.json();
     } else {
-       return { ok: true }; 
+      return { ok: true };
     }
   } catch (error) {
     console.error("Fetch error:", error);
@@ -58,10 +62,12 @@ async function fetchWithAuth(url, opts = {}) {
 export async function createUserRecordAPI() {
   const user = auth.currentUser;
   if (!user || !user.email) {
-     console.error("User not available or email missing for createUserRecordAPI");
-     throw new Error("User data incomplete for creating record.");
+    console.error(
+      "User not available or email missing for createUserRecordAPI"
+    );
+    throw new Error("User data incomplete for creating record.");
   }
-  return fetchWithAuth(`/api/auth/create-user-record`, { 
+  return fetchWithAuth(`/api/auth/create-user-record`, {
     method: "POST",
     body: JSON.stringify({ uid: user.uid, email: user.email }),
   });
@@ -79,27 +85,34 @@ export async function createInventory(payload) {
 }
 
 export async function deleteInventory(inventoryId) {
-    return fetchWithAuth(`/api/inventories/${inventoryId}`, {
-        method: 'DELETE',
-    });
+  return fetchWithAuth(`/api/inventories/${inventoryId}`, {
+    method: "DELETE",
+  });
 }
-
 
 export async function getItems(inventoryId) {
   return fetchWithAuth(`/api/items?inventoryId=${inventoryId}`);
 }
 
-export async function createItem(inventoryId, data) {
+export async function createItem(inventoryId, data, customId = null) {
   return fetchWithAuth(`/api/items`, {
     method: "POST",
-    body: JSON.stringify({ inventoryId, data }),
+    body: JSON.stringify({
+      inventoryId,
+      data,
+      customId: customId || null,
+    }),
   });
 }
 
-export async function updateItem(inventoryId, itemId, data) {
+export async function updateItem(inventoryId, itemId, data, customId = null) {
   return fetchWithAuth(`/api/items/${itemId}`, {
     method: "PUT",
-    body: JSON.stringify({ inventoryId, data }),
+    body: JSON.stringify({
+      inventoryId,
+      data,
+      customId: customId || null,
+    }),
   });
 }
 
@@ -112,9 +125,7 @@ export async function deleteItem(inventoryId, itemId) {
 
 export async function globalSearch(query) {
   if (!query || query.length < 2) return { results: [] };
-  return fetchWithAuth(
-    `/api/search?q=${encodeURIComponent(query)}&limit=20`
-  );
+  return fetchWithAuth(`/api/search?q=${encodeURIComponent(query)}&limit=20`);
 }
 
 export async function getAdminUsers() {
@@ -126,4 +137,8 @@ export async function updateAdminUser(uid, data) {
     method: "PUT",
     body: JSON.stringify(data),
   });
+}
+
+export async function getAllInventories() {
+  return fetchWithAuth(`/api/admin/inventories`);
 }
