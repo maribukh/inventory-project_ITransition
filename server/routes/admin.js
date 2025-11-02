@@ -1,5 +1,5 @@
-// server/routes/admin.js
 import express from "express";
+import pool from "../utils/db.js"; 
 import authMiddleware from "../middlewares/authMiddleware.js";
 import adminMiddleware from "../middlewares/adminMiddleware.js";
 import { getAllUsers, updateUser } from "../controllers/usersController.js";
@@ -42,13 +42,13 @@ router.get("/inventories", async (req, res) => {
 
       return {
         ...inv,
-        fieldsSchema,
+        fieldsSchema: fieldsSchema,
       };
     });
 
-    res.json(inventories);
+    res.json({ inventories });
   } catch (err) {
-    console.error("Get all inventories error:", err);
+    console.error("Admin get inventories error:", err);
     res.status(500).json({ error: "Failed to get inventories" });
   }
 });

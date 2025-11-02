@@ -142,3 +142,7 @@ export async function updateAdminUser(uid, data) {
 export async function getAllInventories() {
   return fetchWithAuth(`/api/admin/inventories`);
 }
+
+export async function getAdminInventories() {
+  return fetchWithAuth(`/api/admin/inventories`);
+}

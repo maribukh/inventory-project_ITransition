@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLanguage, translations } from "../hooks/useLanguage";
-import { getAdminUsers, updateAdminUser, getInventories } from "../utils/api";
+import {
+  getAdminUsers,
+  updateAdminUser,
+  getAdminInventories,
+} from "../utils/api";
 import toast from "react-hot-toast";
 
 const UsersIcon = () => (
@@ -153,9 +157,12 @@ export default function AdminPage() {
     queryFn: getAdminUsers,
   });
 
+  // -------------------------------------------------------------------------------------
+  // ИСПРАВЛЕНИЕ №2: Используем 'getAdminInventories'
+  // -------------------------------------------------------------------------------------
   const { data: inventoriesData, isLoading: inventoriesLoading } = useQuery({
     queryKey: ["adminInventories"],
-    queryFn: getInventories,
+    queryFn: getAdminInventories,
   });
 
   const updateUserMutation = useMutation({
@@ -176,20 +183,23 @@ export default function AdminPage() {
   const handleToggleAdmin = (user) => {
     updateUserMutation.mutate({
       uid: user.uid,
-      data: { isAdmin: !user.isAdmin },
+      data: { isAdmin: !user.is_admin }, // исправил 'isAdmin' на 'is_admin'
     });
   };
 
   const handleToggleBlock = (user) => {
     updateUserMutation.mutate({
       uid: user.uid,
-      data: { isBlocked: !user.isBlocked },
+      data: { isBlocked: !user.is_blocked }, // исправил 'isBlocked' на 'is_blocked'
     });
   };
 
   const getStats = () => {
     const users = usersData?.users || [];
-    const inventories = inventoriesData || [];
+    // -------------------------------------------------------------------------------------
+    // ИСПРАВЛЕНИЕ №3: Достаем массив из 'inventoriesData.inventories'
+    // -------------------------------------------------------------------------------------
+    const inventories = inventoriesData?.inventories || [];
 
     return {
       totalUsers: users.length,
@@ -294,8 +304,11 @@ export default function AdminPage() {
           />
         )}
         {activeTab === "inventories" && (
+          // -------------------------------------------------------------------------------------
+          // ИСПРАВЛЕНИЕ №4: Достаем массив из 'inventoriesData.inventories'
+          // -------------------------------------------------------------------------------------
           <InventoriesTab
-            inventories={inventoriesData || []}
+            inventories={inventoriesData?.inventories || []}
             loading={inventoriesLoading}
             language={language}
           />
@@ -703,7 +716,7 @@ function InventoryRow({ inventory, language }) {
         </div>
       </td>
       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium">
-        {inventory.user_email || "Unknown"}
+        {inventory.user_email || "Unknown"} {/* <-- ТЕПЕРЬ ЭТО СРАБОТАЕТ */}
       </td>
       <td className="px-6 py-4">
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
