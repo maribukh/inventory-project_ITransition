@@ -4,7 +4,6 @@ import { useLanguage, translations } from "../hooks/useLanguage";
 import { getAdminUsers, updateAdminUser, getInventories } from "../utils/api";
 import toast from "react-hot-toast";
 
-// Beautiful SVG Icons
 const UsersIcon = () => (
   <svg
     className="w-6 h-6"
@@ -210,7 +209,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>
@@ -226,7 +224,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title={language === "en" ? "Total Users" : "Всего пользователей"}
@@ -258,7 +255,6 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
         <nav className="flex space-x-8 px-6">
           <TabButton
@@ -287,7 +283,6 @@ export default function AdminPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
       <div>
         {activeTab === "users" && (
           <UsersTab

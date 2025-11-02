@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { globalSearch } from "../utils/api"; 
+import { globalSearch } from "../utils/api";
 
 export function useGlobalSearch(query) {
   return useQuery({

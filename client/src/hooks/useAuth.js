@@ -5,7 +5,7 @@ import { createUserRecordAPI } from "../utils/api";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); 
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function useAuth() {
         }
       } else {
         setUser(null);
-        setIsAdmin(false); 
+        setIsAdmin(false);
       }
 
       setLoading(false);
