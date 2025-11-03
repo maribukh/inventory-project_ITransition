@@ -9,49 +9,63 @@ async function globalSearch(req, res) {
       return res.json({ results: [] });
     }
 
-    const searchTermFTS = q.trim().split(" ").join(" & ");
-    const searchTermLike = `%${q.trim().toLowerCase()}%`;
-
-    const allTextFields = [
-      "i.custom_id",
-      "i.custom_string1",
-      "i.custom_string2",
-      "i.custom_string3",
-      "i.custom_text1",
-      "i.custom_text2",
-      "i.custom_text3",
-      "i.custom_number1::text",
-      "i.custom_number2::text",
-      "i.custom_number3::text",
-      "i.custom_link1",
-      "i.custom_link2",
-      "i.custom_link3",
-    ]
-      .map((field) => `COALESCE(${field}, '')`)
-      .join(" || ' ' || ");
+    const searchTerm = q.trim();
+    const searchTermFTS = searchTerm
+      .split(" ")
+      .filter((s) => s)
+      .join(" & ");
+    const searchTermLike = `%${searchTerm.toLowerCase()}%`;
 
     const query = `
+      WITH search_results AS (
+        SELECT
+          inv.id as "inventoryId",
+          inv.name as "inventoryName",
+          inv.description as "searchText",
+          -- Приоритет 1: Полное совпадение по FTS
+          ts_rank(to_tsvector('simple', inv.name || ' ' || COALESCE(inv.description, '')), to_tsquery('simple', $2)) as rank
+        FROM inventories inv
+        WHERE
+          (inv.user_id = $1 OR inv.is_public = true) AND
+          to_tsvector('simple', inv.name || ' ' || COALESCE(inv.description, '')) @@ to_tsquery('simple', $2)
+
+        UNION
+
+        SELECT
+          inv.id as "inventoryId",
+          inv.name as "inventoryName",
+          inv.description as "searchText",
+          -- Приоритет 2: Частичное совпадение по LIKE
+          0.1 as rank
+        FROM inventories inv
+        WHERE
+          (inv.user_id = $1 OR inv.is_public = true) AND
+          (LOWER(inv.name) LIKE $3 OR LOWER(COALESCE(inv.description, '')) LIKE $3)
+      )
       SELECT
-          i.id,
-          i.custom_id,
-          inv.id AS "inventoryId",
-          inv.name AS "inventoryName",
-          (${allTextFields}) AS "searchText"
-       FROM items i
-       JOIN inventories inv ON i.inventory_id = inv.id
-       WHERE
-          (inv.user_id = $1 OR inv.is_public = true)
-          AND (
-            to_tsvector('simple', ${allTextFields}) @@ to_tsquery('simple', $2)
-          )
-       ORDER BY 
-         ts_rank(to_tsvector('simple', ${allTextFields}), to_tsquery('simple', $2)) DESC,
-         i.created_at DESC
-       LIMIT $3`;
+        sr."inventoryId",
+        sr."inventoryName",
+        sr."searchText"
+      FROM search_results sr
+      GROUP BY sr."inventoryId", sr."inventoryName", sr."searchText", sr.rank
+      ORDER BY sr.rank DESC, sr."inventoryName" ASC
+      LIMIT $4;
+    `;
 
-    const result = await pool.query(query, [uid, searchTermFTS, limit]);
+    const result = await pool.query(query, [
+      uid,
+      searchTermFTS,
+      searchTermLike,
+      limit,
+    ]);
 
-    res.json({ results: result.rows });
+    const finalResults = result.rows.map((row) => ({
+      ...row,
+      id: row.inventoryId, 
+      customId: null,
+    }));
+
+    res.json({ results: finalResults });
   } catch (err) {
     console.error("Global search error:", err);
     res.status(500).json({ error: "globalSearch error" });

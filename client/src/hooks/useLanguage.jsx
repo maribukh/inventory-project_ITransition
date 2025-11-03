@@ -128,6 +128,7 @@ export const translations = {
     publicInventories: "Public Inventories",
     noPublicInventories: "No Public Inventories Found",
     checkBackLater: "Check back later or create your own!",
+    readOnly: "Read Only",
   },
   ru: {
     signIn: "Войти",
@@ -219,5 +220,6 @@ export const translations = {
     publicInventories: "Публичные инвентари",
     noPublicInventories: "Публичные инвентари не найдены",
     checkBackLater: "Загляните позже или создайте свой собственный!",
+    readOnly: "Только для чтения",
   },
 };

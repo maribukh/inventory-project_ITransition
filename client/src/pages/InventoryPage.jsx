@@ -13,6 +13,7 @@ import {
   XMarkIcon,
   CheckIcon,
   Cog6ToothIcon,
+  EyeIcon,
 } from "@heroicons/react/20/solid";
 
 export default function InventoryPage() {
@@ -214,16 +215,17 @@ export default function InventoryPage() {
     <div className="w-full">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {inventory?.name}
-            <span
-              className={`ml-3 text-sm font-medium ${
-                inventory?.is_public ? "text-green-500" : "text-gray-400"
-              }`}
-            >
-              {inventory?.is_public ? `(${t.public})` : `(${t.private})`}
-            </span>
-          </h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {inventory?.name}
+            </h1>
+            {!isOwner && (
+              <span className="inline-flex items-center gap-x-1.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                <EyeIcon className="h-3 w-3" />
+                {t.readOnly}
+              </span>
+            )}
+          </div>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             {inventory?.description} ( {allItems.length} {t.itemsCount} )
           </p>
