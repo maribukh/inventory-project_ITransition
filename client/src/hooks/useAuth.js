@@ -14,15 +14,10 @@ export function useAuth() {
         setUser(user);
 
         try {
-          console.log("🔄 Creating user record for:", user.email);
           const res = await createUserRecordAPI();
           if (res.isAdmin) {
             setIsAdmin(true);
           }
-          console.log(
-            "✅ User record created/verified. Admin status:",
-            res.isAdmin
-          );
         } catch (error) {
           console.error("❌ Failed to create user record:", error);
           setIsAdmin(false);

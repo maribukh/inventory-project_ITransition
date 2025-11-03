@@ -1,6 +1,4 @@
-// [file name]: server/middlewares/adminMiddleware.js
-import pool from "../utils/db.js"; // Наш новый пул
-
+import pool from "../utils/db.js"; 
 async function adminMiddleware(req, res, next) {
   try {
     const result = await pool.query(

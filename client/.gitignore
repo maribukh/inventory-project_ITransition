@@ -61,6 +61,7 @@ server/node_modules/
 dist/
 build/
 
+/scripts
 server/serviceAccountKey.json
 server/.env
 server/.env.*

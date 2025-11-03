@@ -1,4 +1,3 @@
-// [file name]: server/middlewares/authMiddleware.js
 import { admin } from "../admin.config.js";
 
 async function authMiddleware(req, res, next) {

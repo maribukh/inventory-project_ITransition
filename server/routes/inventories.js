@@ -1,6 +1,3 @@
-// [file name]: routes/inventories.js
-// Inventories routes for ES modules
-
 import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import {

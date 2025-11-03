@@ -1,6 +1,3 @@
-// [file name]: routes/search.js
-// Search routes for ES modules
-
 import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { globalSearch } from "../controllers/searchController.js";
