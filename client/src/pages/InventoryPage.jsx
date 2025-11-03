@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getItems, createItem, deleteItem, updateItem } from "../utils/api";
@@ -22,7 +22,6 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [customId, setCustomId] = useState("");
-  const checkboxRef = useRef(null);
 
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -58,14 +57,6 @@ export default function InventoryPage() {
         item.custom_id?.toLowerCase().includes(lowerSearch)
     );
   }, [allItems, searchTerm]);
-
-  useEffect(() => {
-    if (checkboxRef.current) {
-      const isIndeterminate =
-        selectedItems.size > 0 && selectedItems.size < filteredItems.length;
-      checkboxRef.current.indeterminate = isIndeterminate;
-    }
-  }, [selectedItems, filteredItems.length]);
 
   const singleSelectedItem = useMemo(() => {
     if (selectedItems.size !== 1) return null;
@@ -271,7 +262,6 @@ export default function InventoryPage() {
                         className="relative w-12 px-6 sm:w-16 sm:px-8"
                       >
                         <input
-                          ref={checkboxRef}
                           type="checkbox"
                           className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                           checked={
@@ -279,6 +269,10 @@ export default function InventoryPage() {
                             selectedItems.size === filteredItems.length
                           }
                           onChange={toggleSelectAll}
+                          indeterminate={
+                            selectedItems.size > 0 &&
+                            selectedItems.size < filteredItems.length
+                          }
                         />
                       </th>
                     )}

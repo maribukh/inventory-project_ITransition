@@ -64,8 +64,12 @@ async function getInventories(req, res) {
     const uid = req.user.uid;
 
     const query = `
-      SELECT i.*, (SELECT COUNT(*) FROM items WHERE inventory_id = i.id) as items_count
+      SELECT 
+        i.*, 
+        u.email as user_email,
+        (SELECT COUNT(*) FROM items WHERE inventory_id = i.id) as items_count
       FROM inventories i
+      LEFT JOIN users u ON i.user_id = u.uid
       WHERE i.user_id = $1 OR i.is_public = true
       ORDER BY i.created_at DESC
     `;

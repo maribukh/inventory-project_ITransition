@@ -12,41 +12,48 @@ async function globalSearch(req, res) {
     const searchTermFTS = q.trim().split(" ").join(" & ");
     const searchTermLike = `%${q.trim().toLowerCase()}%`;
 
-    const result = await pool.query(
-      `SELECT
+    const allTextFields = [
+      "i.custom_id",
+      "i.custom_string1",
+      "i.custom_string2",
+      "i.custom_string3",
+      "i.custom_text1",
+      "i.custom_text2",
+      "i.custom_text3",
+      "i.custom_number1::text",
+      "i.custom_number2::text",
+      "i.custom_number3::text",
+      "i.custom_link1",
+      "i.custom_link2",
+      "i.custom_link3",
+    ]
+      .map((field) => `COALESCE(${field}, '')`)
+      .join(" || ' ' || ");
+
+    const query = `
+      SELECT
           i.id,
           i.custom_id,
-          i.search_text,
-          i.inventory_id,
-          inv.name AS inventory_name,
-          i.created_at
+          inv.id AS "inventoryId",
+          inv.name AS "inventoryName",
+          (${allTextFields}) AS "searchText"
        FROM items i
        JOIN inventories inv ON i.inventory_id = inv.id
        WHERE
           (inv.user_id = $1 OR inv.is_public = true)
           AND (
-            to_tsvector('simple', i.search_text) @@ to_tsquery('simple', $2)
-            OR LOWER(i.custom_id) LIKE $3
+            to_tsvector('simple', ${allTextFields}) @@ to_tsquery('simple', $2)
           )
        ORDER BY 
-         ts_rank(to_tsvector('simple', i.search_text), to_tsquery('simple', $2)) DESC,
+         ts_rank(to_tsvector('simple', ${allTextFields}), to_tsquery('simple', $2)) DESC,
          i.created_at DESC
-       LIMIT $4`,
-      [uid, searchTermFTS, searchTermLike, limit]
-    );
+       LIMIT $3`;
 
-    const results = result.rows.map((row) => ({
-      id: row.id,
-      customId: row.custom_id,
-      searchText: row.search_text,
-      inventoryId: row.inventory_id,
-      inventoryName: row.inventory_name,
-      createdAt: row.created_at,
-    }));
+    const result = await pool.query(query, [uid, searchTermFTS, limit]);
 
-    res.json({ results });
+    res.json({ results: result.rows });
   } catch (err) {
-    console.error(err);
+    console.error("Global search error:", err);
     res.status(500).json({ error: "globalSearch error" });
   }
 }

@@ -10,13 +10,6 @@ async function checkInventoryOwner(inventoryId, userId) {
   return inv;
 }
 
-function buildSearchText(data) {
-  return Object.values(data)
-    .filter((v) => v !== null && v !== undefined)
-    .join(" ")
-    .toLowerCase();
-}
-
 async function createItem(req, res) {
   try {
     const uid = req.user.uid;
@@ -31,7 +24,6 @@ async function createItem(req, res) {
       ...data,
       custom_id: customId || null,
       inventory_id: inventoryId,
-      search_text: buildSearchText(data),
     };
 
     const columns = Object.keys(dataForSql).join(", ");
@@ -69,7 +61,15 @@ async function getItems(req, res) {
     if (!inventoryId)
       return res.status(400).json({ error: "Missing inventoryId" });
 
-    const inv = await checkInventoryOwner(inventoryId, uid);
+    const invResult = await pool.query(
+      "SELECT * FROM inventories WHERE id = $1 AND (user_id = $2 OR is_public = true)",
+      [inventoryId, uid]
+    );
+
+    if (invResult.rowCount === 0) {
+      throw new Error("Inventory not found or private");
+    }
+    const inv = invResult.rows[0];
 
     const itemsResult = await pool.query(
       "SELECT * FROM items WHERE inventory_id = $1 ORDER BY created_at DESC LIMIT $2",
@@ -96,6 +96,8 @@ async function getItems(req, res) {
         id: inv.id,
         name: inv.name,
         description: inv.description,
+        is_public: inv.is_public,
+        user_id: inv.user_id,
         fieldsSchema: fieldsSchema,
       },
     });
@@ -104,7 +106,7 @@ async function getItems(req, res) {
     const status =
       err.message === "Forbidden"
         ? 403
-        : err.message === "Inventory not found"
+        : err.message === "Inventory not found or private"
         ? 404
         : 500;
     res.status(status).json({ error: err.message || "getItems error" });
@@ -125,7 +127,6 @@ async function updateItem(req, res) {
     const dataForSql = {
       ...data,
       custom_id: customId || null,
-      search_text: buildSearchText(data),
       updated_at: new Date(),
     };
 
