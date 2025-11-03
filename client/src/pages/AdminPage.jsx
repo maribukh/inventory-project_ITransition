@@ -110,22 +110,6 @@ const EditIcon = () => (
   </svg>
 );
 
-const DeleteIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-
 const CalendarIcon = () => (
   <svg
     className="w-4 h-4"
@@ -147,19 +131,18 @@ export default function AdminPage() {
   const t = translations[language];
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users");
+  const [page, setPage] = useState(1);
 
   const {
     data: usersData,
     isLoading: usersLoading,
     error: usersError,
   } = useQuery({
-    queryKey: ["adminUsers"],
-    queryFn: getAdminUsers,
+    queryKey: ["adminUsers", page],
+    queryFn: () => getAdminUsers(page),
+    keepPreviousData: true,
   });
 
-  // -------------------------------------------------------------------------------------
-  // ИСПРАВЛЕНИЕ №2: Используем 'getAdminInventories'
-  // -------------------------------------------------------------------------------------
   const { data: inventoriesData, isLoading: inventoriesLoading } = useQuery({
     queryKey: ["adminInventories"],
     queryFn: getAdminInventories,
@@ -168,7 +151,7 @@ export default function AdminPage() {
   const updateUserMutation = useMutation({
     mutationFn: ({ uid, data }) => updateAdminUser(uid, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["adminUsers", page] });
       toast.success(
         language === "en"
           ? "User updated successfully"
@@ -183,37 +166,34 @@ export default function AdminPage() {
   const handleToggleAdmin = (user) => {
     updateUserMutation.mutate({
       uid: user.uid,
-      data: { isAdmin: !user.is_admin }, // исправил 'isAdmin' на 'is_admin'
+      data: { isAdmin: !user.is_admin },
     });
   };
 
   const handleToggleBlock = (user) => {
     updateUserMutation.mutate({
       uid: user.uid,
-      data: { isBlocked: !user.is_blocked }, // исправил 'isBlocked' на 'is_blocked'
+      data: { isBlocked: !user.is_blocked },
     });
   };
 
   const getStats = () => {
-    const users = usersData?.users || [];
-    // -------------------------------------------------------------------------------------
-    // ИСПРАВЛЕНИЕ №3: Достаем массив из 'inventoriesData.inventories'
-    // -------------------------------------------------------------------------------------
+    const totalUsers = usersData?.total || 0;
     const inventories = inventoriesData?.inventories || [];
+    const currentPageUsers = usersData?.users || [];
 
     return {
-      totalUsers: users.length,
-      activeUsers: users.filter((u) => !u.is_blocked).length,
-      blockedUsers: users.filter((u) => u.is_blocked).length,
-      adminUsers: users.filter((u) => u.is_admin).length,
+      totalUsers: totalUsers,
+      activeUsers: currentPageUsers.filter((u) => !u.is_blocked).length,
+      blockedUsers: currentPageUsers.filter((u) => u.is_blocked).length,
+      adminUsers: currentPageUsers.filter((u) => u.is_admin).length,
       totalInventories: inventories.length,
-      publicInventories: inventories.filter((inv) => inv.is_public).length,
     };
   };
 
   const stats = getStats();
 
-  if (usersLoading) return <div className="p-8">{t.loading}</div>;
+  if (usersLoading && page === 1) return <div className="p-8">{t.loading}</div>;
   if (usersError)
     return <div className="p-8 text-red-500">Error: {usersError.message}</div>;
 
@@ -240,28 +220,24 @@ export default function AdminPage() {
           value={stats.totalUsers}
           icon={<UsersIcon />}
           color="blue"
-          trend="+12%"
         />
         <StatCard
-          title={language === "en" ? "Active Users" : "Активных пользователей"}
+          title={language === "en" ? "Active (Page)" : "Активных (Стр.)"}
           value={stats.activeUsers}
           icon={<ActiveUsersIcon />}
           color="green"
-          trend="+8%"
         />
         <StatCard
-          title={language === "en" ? "Admin Users" : "Администраторов"}
+          title={language === "en" ? "Admins (Page)" : "Админов (Стр.)"}
           value={stats.adminUsers}
           icon={<AdminIcon />}
           color="purple"
-          trend="+2"
         />
         <StatCard
           title={language === "en" ? "Inventories" : "Инвентарей"}
           value={stats.totalInventories}
           icon={<InventoryIcon />}
           color="indigo"
-          trend="+15%"
         />
       </div>
 
@@ -285,11 +261,6 @@ export default function AdminPage() {
             }
             count={stats.totalInventories}
           />
-          <TabButton
-            active={activeTab === "analytics"}
-            onClick={() => setActiveTab("analytics")}
-            label={language === "en" ? "Analytics" : "Аналитика"}
-          />
         </nav>
       </div>
 
@@ -297,24 +268,21 @@ export default function AdminPage() {
         {activeTab === "users" && (
           <UsersTab
             users={usersData?.users || []}
+            totalUsers={usersData?.total || 0}
+            page={page}
+            setPage={setPage}
             onToggleAdmin={handleToggleAdmin}
             onToggleBlock={handleToggleBlock}
-            loading={updateUserMutation.isPending}
+            loading={updateUserMutation.isPending || (usersLoading && page > 1)}
             language={language}
           />
         )}
         {activeTab === "inventories" && (
-          // -------------------------------------------------------------------------------------
-          // ИСПРАВЛЕНИЕ №4: Достаем массив из 'inventoriesData.inventories'
-          // -------------------------------------------------------------------------------------
           <InventoriesTab
             inventories={inventoriesData?.inventories || []}
             loading={inventoriesLoading}
             language={language}
           />
-        )}
-        {activeTab === "analytics" && (
-          <AnalyticsTab stats={stats} language={language} />
         )}
       </div>
     </div>
@@ -404,7 +372,19 @@ function TabButton({ active, onClick, label, count }) {
   );
 }
 
-function UsersTab({ users, onToggleAdmin, onToggleBlock, loading, language }) {
+function UsersTab({
+  users,
+  totalUsers,
+  page,
+  setPage,
+  onToggleAdmin,
+  onToggleBlock,
+  loading,
+  language,
+}) {
+  const limit = 50;
+  const totalPages = Math.ceil(totalUsers / limit);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -422,7 +402,7 @@ function UsersTab({ users, onToggleAdmin, onToggleBlock, loading, language }) {
             </p>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {users.length} {language === "en" ? "users" : "пользователей"}
+            {totalUsers} {language === "en" ? "users" : "пользователей"}
           </div>
         </div>
       </div>
@@ -445,7 +425,11 @@ function UsersTab({ users, onToggleAdmin, onToggleBlock, loading, language }) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody
+            className={`divide-y divide-gray-200 dark:divide-gray-700 ${
+              loading ? "opacity-50" : ""
+            }`}
+          >
             {users.map((user) => (
               <UserRow
                 key={user.uid}
@@ -459,22 +443,41 @@ function UsersTab({ users, onToggleAdmin, onToggleBlock, loading, language }) {
           </tbody>
         </table>
 
-        {users.length === 0 && (
+        {users.length === 0 && !loading && (
           <div className="text-center py-16">
-            <div className="text-gray-300 dark:text-gray-600 mb-4">
-              <UsersIcon />
-            </div>
             <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
               {language === "en" ? "No users found" : "Пользователи не найдены"}
-            </p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              {language === "en"
-                ? "Users will appear here once they register"
-                : "Пользователи появятся здесь после регистрации"}
             </p>
           </div>
         )}
       </div>
+
+      {totalUsers > limit && (
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {language === "en" ? "Page" : "Стр."}{" "}
+            <span className="font-medium">{page}</span>{" "}
+            {language === "en" ? "of" : "из"}{" "}
+            <span className="font-medium">{totalPages}</span>
+          </span>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1 || loading}
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {language === "en" ? "Previous" : "Назад"}
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              disabled={page === totalPages || loading}
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {language === "en" ? "Next" : "Вперед"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -716,7 +719,7 @@ function InventoryRow({ inventory, language }) {
         </div>
       </td>
       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium">
-        {inventory.user_email || "Unknown"} {/* <-- ТЕПЕРЬ ЭТО СРАБОТАЕТ */}
+        {inventory.user_email || "Unknown"}
       </td>
       <td className="px-6 py-4">
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
@@ -736,117 +739,5 @@ function InventoryRow({ inventory, language }) {
         </div>
       </td>
     </tr>
-  );
-}
-
-function AnalyticsTab({ stats, language }) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          {language === "en"
-            ? "User Distribution"
-            : "Распределение пользователей"}
-        </h3>
-        <div className="space-y-6">
-          <ProgressBar
-            label={language === "en" ? "Active Users" : "Активные пользователи"}
-            value={stats.activeUsers}
-            total={stats.totalUsers}
-            color="green"
-          />
-          <ProgressBar
-            label={language === "en" ? "Admin Users" : "Администраторы"}
-            value={stats.adminUsers}
-            total={stats.totalUsers}
-            color="purple"
-          />
-          <ProgressBar
-            label={language === "en" ? "Blocked Users" : "Заблокированные"}
-            value={stats.blockedUsers}
-            total={stats.totalUsers}
-            color="red"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          {language === "en" ? "System Overview" : "Обзор системы"}
-        </h3>
-        <div className="space-y-4">
-          <StatItem
-            label={language === "en" ? "Total Users" : "Всего пользователей"}
-            value={stats.totalUsers}
-            color="blue"
-          />
-          <StatItem
-            label={
-              language === "en" ? "Active Users" : "Активных пользователей"
-            }
-            value={stats.activeUsers}
-            color="green"
-          />
-          <StatItem
-            label={language === "en" ? "Administrators" : "Администраторов"}
-            value={stats.adminUsers}
-            color="purple"
-          />
-          <StatItem
-            label={language === "en" ? "Total Inventories" : "Всего инвентарей"}
-            value={stats.totalInventories}
-            color="indigo"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProgressBar({ label, value, total, color }) {
-  const percentage = total > 0 ? (value / total) * 100 : 0;
-
-  const colorClasses = {
-    green: "bg-green-500",
-    purple: "bg-purple-500",
-    red: "bg-red-500",
-    blue: "bg-blue-500",
-  };
-
-  return (
-    <div>
-      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-        <span className="font-medium">{label}</span>
-        <span className="font-semibold">
-          {value} / {total} ({percentage.toFixed(1)}%)
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
-        <div
-          className={`h-2.5 rounded-full ${colorClasses[color]} transition-all duration-500 ease-out`}
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-    </div>
-  );
-}
-
-function StatItem({ label, value, color }) {
-  const colorClasses = {
-    blue: "text-blue-600 dark:text-blue-400",
-    green: "text-green-600 dark:text-green-400",
-    purple: "text-purple-600 dark:text-purple-400",
-    indigo: "text-indigo-600 dark:text-indigo-400",
-  };
-
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-      <span className="text-gray-600 dark:text-gray-400 font-medium">
-        {label}
-      </span>
-      <span className={`text-lg font-bold ${colorClasses[color]}`}>
-        {value}
-      </span>
-    </div>
   );
 }

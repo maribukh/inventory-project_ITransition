@@ -43,33 +43,23 @@ async function fetchWithAuth(url, opts = {}) {
         url,
         errorData,
       });
-      throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
-      );
+      throw new Error(errorData.error || response.statusText);
     }
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-      return await response.json();
-    } else {
-      return { ok: true };
+
+    if (response.status === 204) {
+      return { success: true };
     }
-  } catch (error) {
-    console.error("Fetch error:", error);
-    throw error;
+
+    return response.json();
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    throw err;
   }
 }
 
 export async function createUserRecordAPI() {
-  const user = auth.currentUser;
-  if (!user || !user.email) {
-    console.error(
-      "User not available or email missing for createUserRecordAPI"
-    );
-    throw new Error("User data incomplete for creating record.");
-  }
   return fetchWithAuth(`/api/auth/create-user-record`, {
     method: "POST",
-    body: JSON.stringify({ uid: user.uid, email: user.email }),
   });
 }
 
@@ -77,10 +67,10 @@ export async function getInventories() {
   return fetchWithAuth(`/api/inventories`);
 }
 
-export async function createInventory(payload) {
+export async function createInventory(data) {
   return fetchWithAuth(`/api/inventories`, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 }
 
@@ -91,7 +81,7 @@ export async function deleteInventory(inventoryId) {
 }
 
 export async function getItems(inventoryId) {
-  return fetchWithAuth(`/api/items?inventoryId=${inventoryId}`);
+  return fetchWithAuth(`/api/inventories/${inventoryId}`);
 }
 
 export async function createItem(inventoryId, data, customId = null) {
@@ -128,8 +118,8 @@ export async function globalSearch(query) {
   return fetchWithAuth(`/api/search?q=${encodeURIComponent(query)}&limit=20`);
 }
 
-export async function getAdminUsers() {
-  return fetchWithAuth(`/api/admin/users`);
+export async function getAdminUsers(page = 1) {
+  return fetchWithAuth(`/api/admin/users?page=${page}&limit=50`);
 }
 
 export async function updateAdminUser(uid, data) {
@@ -137,10 +127,6 @@ export async function updateAdminUser(uid, data) {
     method: "PUT",
     body: JSON.stringify(data),
   });
-}
-
-export async function getAllInventories() {
-  return fetchWithAuth(`/api/admin/inventories`);
 }
 
 export async function getAdminInventories() {

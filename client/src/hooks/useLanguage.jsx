@@ -5,7 +5,7 @@ const LanguageContext = createContext();
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {
     const saved = localStorage.getItem("language");
-    return saved || "en"; 
+    return saved || "en";
   });
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function LanguageProvider({ children }) {
 
   const toggleLanguage = (lang) => {
     setLanguage(lang);
-  }; 
+  };
 
   const value = {
     language,
@@ -24,7 +24,7 @@ export function LanguageProvider({ children }) {
 
   return (
     <LanguageContext.Provider value={value}>
-            {children}   {" "}
+      {children}
     </LanguageContext.Provider>
   );
 }
@@ -39,12 +39,10 @@ export function useLanguage() {
 
 export const translations = {
   en: {
-    // Navbar
     signIn: "Sign in",
     getStarted: "Get started",
     signOut: "Sign out",
-    manage: "Manage", 
-
+    manage: "Manage",
     signInToAccount: "Sign in to your account",
     createNewAccount: "create a new account",
     continueWithGoogle: "Continue with Google",
@@ -54,7 +52,6 @@ export const translations = {
     signingIn: "Signing in...",
     welcomeBack: "Welcome back!",
     dontHaveAccount: "Don't have an account?",
-
     joinInventoro: "Join Inventoro",
     alreadyHaveAccount: "Already have an account?",
     signInHere: "Sign in here",
@@ -65,8 +62,7 @@ export const translations = {
     byCreatingAccount: "By creating an account, you agree to our",
     termsOfService: "Terms of Service",
     and: "and",
-    privacyPolicy: "Privacy Policy", 
-
+    privacyPolicy: "Privacy Policy",
     myInventories: "My Inventories",
     newInventory: "New Inventory",
     createNewInventory: "Create New Inventory",
@@ -80,22 +76,28 @@ export const translations = {
     noInventories: "No inventories yet",
     createFirstInventory: "Create your first inventory to get started",
     fields: "fields",
-
     itemCreatedSuccess: "Item created successfully!",
     itemCreatedError: "Failed to create item",
+    itemUpdatedSuccess: "Item updated successfully!",
     itemsDeletedSuccess: "Items deleted successfully!",
     itemsDeletedError: "Failed to delete items",
     confirmDeleteItems: "Are you sure you want to delete {count} item(s)?",
+    confirmDeleteInventory:
+      "Are you sure you want to delete this inventory? This action cannot be undone.",
+    inventoryDeletedSuccess: "Inventory deleted successfully",
     loadingInventory: "Loading inventory...",
     inventoryNotFound: "Inventory not found",
     itemsCount: "items",
     addNewItem: "Add New Item",
+    editItem: "Edit Item",
     customIdOptional: "Custom ID (optional)",
     customIdPlaceholder: "Enter custom ID...",
     yes: "Yes",
     no: "No",
     creating: "Creating...",
+    saving: "Saving...",
     createItem: "Create Item",
+    saveChanges: "Save Changes",
     itemsSelected: "item(s) selected",
     deleting: "Deleting...",
     deleteSelected: "Delete Selected",
@@ -103,22 +105,28 @@ export const translations = {
     searchItemsPlaceholder: "Search items...",
     customId: "Custom ID",
     noItemsFound: "No items found",
-    openLink: "Open Link", 
-
+    openLink: "Open Link",
     loading: "Loading...",
     error: "Error",
     success: "Success",
     required: "is required",
     invalidEmail: "Email is invalid",
-    cancel: "Cancel", 
+    cancel: "Cancel",
+    edit: "Edit",
+    delete: "Delete",
+    open: "Open",
+    public: "Public",
+    private: "Private",
+    more: "more",
+    visibility: "Visibility",
+    visibilityPublic: "Public (Visible to all)",
+    visibilityPrivate: "Private (Only for you)",
   },
   ru: {
-    // Navbar
     signIn: "Войти",
     getStarted: "Начать",
     signOut: "Выйти",
-    manage: "Управлять", 
-
+    manage: "Управлять",
     signInToAccount: "Войдите в свой аккаунт",
     createNewAccount: "создать новый аккаунт",
     continueWithGoogle: "Продолжить с Google",
@@ -127,8 +135,7 @@ export const translations = {
     password: "Пароль",
     signingIn: "Вход...",
     welcomeBack: "С возвращением!",
-    dontHaveAccount: "Нет аккаунта?", 
-
+    dontHaveAccount: "Нет аккаунта?",
     joinInventoro: "Присоединяйтесь к Inventoro",
     alreadyHaveAccount: "Уже есть аккаунт?",
     signInHere: "Войдите здесь",
@@ -139,8 +146,7 @@ export const translations = {
     byCreatingAccount: "Создавая аккаунт, вы соглашаетесь с нашими",
     termsOfService: "Условиями обслуживания",
     and: "и",
-    privacyPolicy: "Политикой конфиденциальности", 
-
+    privacyPolicy: "Политикой конфиденциальности",
     myInventories: "Мои инвентари",
     newInventory: "Новый инвентарь",
     createNewInventory: "Создать новый инвентарь",
@@ -153,23 +159,29 @@ export const translations = {
     yourInventories: "Ваши инвентари",
     noInventories: "Инвентарей пока нет",
     createFirstInventory: "Создайте первый инвентарь чтобы начать",
-    fields: "поля", 
-
+    fields: "поля",
     itemCreatedSuccess: "Элемент успешно создан!",
     itemCreatedError: "Ошибка создания элемента",
+    itemUpdatedSuccess: "Элемент успешно обновлен!",
     itemsDeletedSuccess: "Элементы успешно удалены!",
     itemsDeletedError: "Ошибка удаления элементов",
     confirmDeleteItems: "Вы уверены, что хотите удалить {count} эл-т(ов)?",
+    confirmDeleteInventory:
+      "Вы уверены, что хотите удалить этот инвентарь? Это действие необратимо.",
+    inventoryDeletedSuccess: "Инвентарь успешно удален",
     loadingInventory: "Загрузка инвентаря...",
     inventoryNotFound: "Инвентарь не найден",
     itemsCount: "эл-тов",
     addNewItem: "Добавить новый элемент",
+    editItem: "Редактировать элемент",
     customIdOptional: "Свой ID (необязательно)",
     customIdPlaceholder: "Введите свой ID...",
     yes: "Да",
     no: "Нет",
     creating: "Создание...",
+    saving: "Сохранение...",
     createItem: "Создать элемент",
+    saveChanges: "Сохранить изменения",
     itemsSelected: "выбрано",
     deleting: "Удаление...",
     deleteSelected: "Удалить выбранное",
@@ -177,13 +189,21 @@ export const translations = {
     searchItemsPlaceholder: "Поиск элементов...",
     customId: "Свой ID",
     noItemsFound: "Элементы не найдены",
-    openLink: "Открыть ссылку", 
-
+    openLink: "Открыть ссылку",
     loading: "Загрузка...",
     error: "Ошибка",
     success: "Успех",
     required: "обязателен",
     invalidEmail: "Неверный email",
-    cancel: "Отмена", 
+    cancel: "Отмена",
+    edit: "Редактировать",
+    delete: "Удалить",
+    open: "Открыть",
+    public: "Публичный",
+    private: "Приватный",
+    more: "еще",
+    visibility: "Видимость",
+    visibilityPublic: "Публичный (Виден всем)",
+    visibilityPrivate: "Приватный (Только для вас)",
   },
 };

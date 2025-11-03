@@ -1,8 +1,9 @@
 import express from "express";
-import pool from "../utils/db.js"; 
+import pool from "../utils/db.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import adminMiddleware from "../middlewares/adminMiddleware.js";
 import { getAllUsers, updateUser } from "../controllers/usersController.js";
+import { mapRowToSchema } from "../controllers/inventoriesController.js";
 
 const router = express.Router();
 
@@ -25,24 +26,9 @@ router.get("/inventories", async (req, res) => {
     `);
 
     const inventories = result.rows.map((inv) => {
-      const fieldsSchema = [];
-      const types = ["string", "text", "number", "boolean", "link"];
-
-      for (const type of types) {
-        for (let i = 1; i <= 3; i++) {
-          if (inv[`custom_${type}${i}_state`] === true) {
-            fieldsSchema.push({
-              key: `custom_${type}${i}`,
-              label: inv[`custom_${type}${i}_name`],
-              type: type,
-            });
-          }
-        }
-      }
-
       return {
         ...inv,
-        fieldsSchema: fieldsSchema,
+        fieldsSchema: mapRowToSchema(inv),
       };
     });
 
