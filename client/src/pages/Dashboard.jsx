@@ -19,12 +19,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { getInventories, createInventory, deleteInventory } from "../utils/api";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../hooks/useLanguage";
-import { useAuth } from "../hooks/useAuth"; // <-- ИМПОРТ
+import { useAuth } from "../hooks/useAuth";
 import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 import {
   TrashIcon,
   PlusIcon,
-  ListBulletIcon,
   CubeIcon,
   UserCircleIcon,
   Bars3Icon,
@@ -117,27 +117,45 @@ const fieldTypes = [
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingInventory, setDeletingInventory] = useState(null);
   const { t } = useLanguage();
-  const { user } = useAuth(); // Получаем текущего пользователя
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: inventories = [],
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["inventories"],
-    queryFn: getInventories,
+  } = useQuery({ queryKey: ["inventories"], queryFn: getInventories });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteInventory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      toast.success(t.inventoryDeletedSuccess);
+    },
+    onError: (err) => toast.error(err.message || t.error),
   });
 
-  // Логика разделения инвентарей
   const { myInventories, publicInventories } = useMemo(() => {
-    if (!user || inventories.length === 0) {
+    if (!user || inventories.length === 0)
       return { myInventories: [], publicInventories: [] };
-    }
     const my = inventories.filter((inv) => inv.user_id === user.uid);
-    const pub = inventories.filter((inv) => inv.user_id !== user.uid);
+    const pub = inventories.filter(
+      (inv) => inv.user_id !== user.uid && inv.is_public
+    );
     return { myInventories: my, publicInventories: pub };
   }, [inventories, user]);
+
+  const handleDeleteClick = (inventory) => {
+    setDeletingInventory(inventory);
+  };
+
+  const confirmDelete = () => {
+    if (deletingInventory) {
+      deleteMutation.mutate(deletingInventory.id);
+    }
+  };
 
   if (isLoading) return <div className="text-center p-8">{t.loading}</div>;
   if (error)
@@ -145,7 +163,6 @@ export default function Dashboard() {
 
   return (
     <div className="w-full">
-      {/* Секция "Мои инвентари" */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t.myInventories}
@@ -166,6 +183,7 @@ export default function Dashboard() {
               inventory={inventory}
               t={t}
               isOwner={true}
+              onDeleteClick={handleDeleteClick}
             />
           ))}
         </div>
@@ -178,8 +196,6 @@ export default function Dashboard() {
           <p className="mt-1 text-sm text-gray-500">{t.createFirstInventory}</p>
         </div>
       )}
-
-      {/* Секция "Публичные инвентари" */}
       <div className="mt-12">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           {t.publicInventories || "Public Inventories"}
@@ -192,6 +208,7 @@ export default function Dashboard() {
                 inventory={inventory}
                 t={t}
                 isOwner={false}
+                onDeleteClick={() => {}}
               />
             ))}
           </div>
@@ -207,7 +224,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-
       {isModalOpen && (
         <CreateModal
           isOpen={isModalOpen}
@@ -215,29 +231,20 @@ export default function Dashboard() {
           t={t}
         />
       )}
+      <ConfirmModal
+        isOpen={!!deletingInventory}
+        onClose={() => setDeletingInventory(null)}
+        onConfirm={confirmDelete}
+        title={t.confirmDeleteInventory || "Delete Inventory"}
+        message={`${t.areYouSure || "Are you sure you want to delete"} "${
+          deletingInventory?.name
+        }"? ${t.cannotBeUndone || "This action cannot be undone."}`}
+      />
     </div>
   );
 }
 
-function InventoryCard({ inventory, t, isOwner }) {
-  const queryClient = useQueryClient();
-  const deleteMutation = useMutation({
-    mutationFn: deleteInventory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventories"] });
-      toast.success(t.inventoryDeletedSuccess);
-    },
-    onError: (error) => toast.error(error.message || t.error),
-  });
-
-  const handleDelete = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (window.confirm(t.confirmDeleteInventory)) {
-      deleteMutation.mutate(inventory.id);
-    }
-  };
-
+function InventoryCard({ inventory, t, isOwner, onDeleteClick }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200 dark:border-gray-700">
       <div className="p-5 flex justify-between items-start">
@@ -259,29 +266,48 @@ function InventoryCard({ inventory, t, isOwner }) {
         </div>
         {isOwner && (
           <button
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="p-1.5 text-gray-400 rounded-full hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+            onClick={() => onDeleteClick(inventory)}
+            className="p-1.5 text-gray-400 rounded-full hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-400 transition-colors"
           >
             <TrashIcon className="h-5 w-5" />
           </button>
         )}
       </div>
-
       <div className="px-5 pb-5 flex-grow">
         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 min-h-[40px]">
           {inventory.description || (
             <span className="italic">No description</span>
           )}
         </p>
+        {inventory.fieldsSchema && inventory.fieldsSchema.length > 0 && (
+          <div className="mt-4">
+            <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+              {t.fields}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {inventory.fieldsSchema.slice(0, 3).map((field) => (
+                <span
+                  key={field.key}
+                  className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium"
+                >
+                  {field.label}
+                </span>
+              ))}
+              {inventory.fieldsSchema.length > 3 && (
+                <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full text-xs font-medium">
+                  +{inventory.fieldsSchema.length - 3} {t.more}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-
       <div className="px-5 pb-5 mt-auto border-t border-gray-100 dark:border-gray-700/50 pt-4">
         <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center space-x-3">
-            <ListBulletIcon className="h-5 w-5" />
+            <CubeIcon className="h-5 w-5" />
             <span>
-              {inventory.fieldsSchema?.length || 0} {t.fields}
+              {inventory.items_count || 0} {t.items}
             </span>
           </div>
           {!isOwner && (
@@ -309,7 +335,6 @@ function InventoryCard({ inventory, t, isOwner }) {
   );
 }
 
-// МОДАЛЬНОЕ ОКНО СОЗДАНИЯ (возвращено из вашей версии)
 function CreateModal({ isOpen, onClose, t }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

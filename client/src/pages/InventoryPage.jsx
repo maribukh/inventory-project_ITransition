@@ -1,17 +1,18 @@
-import React, { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getItems, createItem, deleteItem, updateItem } from "../utils/api";
 import toast from "react-hot-toast";
 import { useLanguage } from "../hooks/useLanguage";
 import { useAuth } from "../hooks/useAuth";
-
+import ConfirmModal from "../components/ConfirmModal";
 import {
   PlusIcon,
   TrashIcon,
   PencilSquareIcon,
   XMarkIcon,
   CheckIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/20/solid";
 
 export default function InventoryPage() {
@@ -22,6 +23,8 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [customId, setCustomId] = useState("");
+  const checkboxRef = useRef(null);
+  const [isConfirmOpen, setConfirmOpen] = useState(false);
 
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -57,6 +60,14 @@ export default function InventoryPage() {
         item.custom_id?.toLowerCase().includes(lowerSearch)
     );
   }, [allItems, searchTerm]);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      const isIndeterminate =
+        selectedItems.size > 0 && selectedItems.size < filteredItems.length;
+      checkboxRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedItems, filteredItems.length]);
 
   const singleSelectedItem = useMemo(() => {
     if (selectedItems.size !== 1) return null;
@@ -185,13 +196,11 @@ export default function InventoryPage() {
   };
 
   const handleDeleteSelected = () => {
-    if (
-      window.confirm(
-        t.confirmDeleteItems.replace("{count}", selectedItems.size)
-      )
-    ) {
-      deleteItemsMutation.mutate(Array.from(selectedItems));
-    }
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    deleteItemsMutation.mutate(Array.from(selectedItems));
   };
 
   if (isLoading)
@@ -220,13 +229,22 @@ export default function InventoryPage() {
           </p>
         </div>
         {isOwner && (
-          <button
-            onClick={() => handleOpenModal("create")}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            {t.addNewItem}
-          </button>
+          <div className="flex space-x-3">
+            <Link
+              to={`/inventory/${inventoryId}/edit`}
+              className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            >
+              <Cog6ToothIcon className="w-5 h-5 mr-2" />
+              {t.settings || "Settings"}
+            </Link>
+            <button
+              onClick={() => handleOpenModal("create")}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              {t.addNewItem}
+            </button>
+          </div>
         )}
       </div>
 
@@ -262,6 +280,7 @@ export default function InventoryPage() {
                         className="relative w-12 px-6 sm:w-16 sm:px-8"
                       >
                         <input
+                          ref={checkboxRef}
                           type="checkbox"
                           className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                           checked={
@@ -269,10 +288,6 @@ export default function InventoryPage() {
                             selectedItems.size === filteredItems.length
                           }
                           onChange={toggleSelectAll}
-                          indeterminate={
-                            selectedItems.size > 0 &&
-                            selectedItems.size < filteredItems.length
-                          }
                         />
                       </th>
                     )}
@@ -333,6 +348,14 @@ export default function InventoryPage() {
           loading={createItemMutation.isPending || updateItemMutation.isPending}
         />
       )}
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title={t.deleteSelected}
+        message={t.confirmDeleteItems.replace("{count}", selectedItems.size)}
+      />
     </div>
   );
 }
@@ -346,7 +369,6 @@ function ItemsToolbar({
   t,
 }) {
   if (selectedCount === 0) return null;
-
   return (
     <div className="mb-4 p-3 flex justify-between items-center bg-gray-100 dark:bg-gray-800 rounded-lg shadow-sm">
       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -361,7 +383,6 @@ function ItemsToolbar({
           <PencilSquareIcon className="w-5 h-5 mr-2" />
           {t.edit}
         </button>
-
         <button
           onClick={onDelete}
           disabled={mutationLoading}
@@ -425,11 +446,8 @@ function ItemModal({
   loading,
 }) {
   if (!isOpen) return null;
-
-  const handleInputChange = (key, value) => {
+  const handleInputChange = (key, value) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
@@ -444,7 +462,6 @@ function ItemModal({
         >
           &#8203;
         </span>
-
         <div className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <form onSubmit={onSubmit}>
             <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -468,7 +485,6 @@ function ItemModal({
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-
                   {fieldsSchema.map((field) => (
                     <div key={field.key}>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -512,7 +528,6 @@ function DynamicInput({ field, value, onChange }) {
     className:
       "mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
   };
-
   switch (field.type) {
     case "string":
     case "link":
@@ -551,18 +566,14 @@ function DynamicInput({ field, value, onChange }) {
 }
 
 function RenderFieldValue({ field, value }) {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === "")
     return <span className="text-gray-400 dark:text-gray-500">N/A</span>;
-  }
-
-  if (field.type === "boolean") {
+  if (field.type === "boolean")
     return value ? (
       <CheckIcon className="h-5 w-5 text-green-500" />
     ) : (
       <XMarkIcon className="h-5 w-5 text-red-500" />
     );
-  }
-
   if (field.type === "link" && value) {
     const href = value.startsWith("http") ? value : `https://${value}`;
     return (
@@ -577,6 +588,5 @@ function RenderFieldValue({ field, value }) {
       </a>
     );
   }
-
   return <span className="line-clamp-2 break-words">{String(value)}</span>;
 }

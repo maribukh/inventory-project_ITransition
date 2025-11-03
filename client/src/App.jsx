@@ -2,13 +2,12 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { LanguageProvider } from "./hooks/useLanguage";
-
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
-
 import Dashboard from "./pages/Dashboard";
 import InventoryPage from "./pages/InventoryPage";
+import EditInventoryPage from "./pages/EditInventoryPage"; 
 import AdminPage from "./pages/AdminPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -40,6 +39,14 @@ function App() {
               }
             />
             <Route
+              path="/inventory/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EditInventoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <AdminRoute>
@@ -47,7 +54,6 @@ function App() {
                 </AdminRoute>
               }
             />
-
             <Route path="*" element={<div>404 - Page Not Found</div>} />
           </Routes>
         </main>
