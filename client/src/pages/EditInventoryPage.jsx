@@ -85,7 +85,7 @@ const BooleanIcon = () => (
 );
 const LinkIcon = () => (
   <svg
-    className="w-5 h-5"
+    className="w-5 h-5 flex justify-center justify-items-center"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"

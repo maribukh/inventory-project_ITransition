@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { useLanguage, translations } from "../hooks/useLanguage";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
 
-export default function SearchBar() {
+export default function SearchBar({ onResultClick }) {
+  // <-- ИЗМЕНЕНИЕ: Добавлен проп
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { data, isLoading } = useGlobalSearch(query);
@@ -18,7 +19,6 @@ export default function SearchBar() {
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -31,6 +31,14 @@ export default function SearchBar() {
   const clearSearch = () => {
     setQuery("");
     setIsOpen(false);
+  };
+
+  const handleResultClick = () => {
+    // <-- ИЗМЕНЕНИЕ: Новая функция
+    setIsOpen(false);
+    if (onResultClick) {
+      onResultClick();
+    }
   };
 
   const results = data?.results || [];
@@ -75,7 +83,7 @@ export default function SearchBar() {
                   key={`${item.inventoryId}-${item.id}`}
                   to={`/inventory/${item.inventoryId}`}
                   className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleResultClick} // <-- ИЗМЕНЕНИЕ: Используется новая функция
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">

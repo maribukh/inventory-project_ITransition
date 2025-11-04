@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLanguage, translations } from "../hooks/useLanguage";
+import { useLanguage } from "../hooks/useLanguage";
 import {
   getAdminUsers,
   updateAdminUser,
@@ -10,8 +10,6 @@ import {
 import toast from "react-hot-toast";
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,6 +30,8 @@ import {
   CalendarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
+  EnvelopeIcon,
+  KeyIcon,
 } from "@heroicons/react/24/outline";
 
 const COLORS = ["#00C49F", "#8884D8", "#FF8042"];
@@ -135,16 +135,16 @@ export default function AdminPage() {
   if (usersError) return <ErrorDisplay message={usersError.message} />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10 p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10 p-4 sm:p-6 space-y-8">
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-indigo-600 dark:from-white dark:to-indigo-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-indigo-600 dark:from-white dark:to-indigo-400 bg-clip-text text-transparent">
               {language === "en"
                 ? "Administration Panel"
                 : "Панель администратора"}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
+            <p className="text-gray-600 dark:text-gray-400 mt-2 text-base md:text-lg">
               {language === "en"
                 ? "System Management & Analytics"
                 : "Управление системой и аналитика"}
@@ -189,7 +189,7 @@ export default function AdminPage() {
       </div>
 
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
-        <nav className="flex space-x-1 p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-blue-50/30 dark:from-gray-800/50 dark:to-blue-900/20">
+        <nav className="flex space-x-1 p-2 sm:p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-blue-50/30 dark:from-gray-800/50 dark:to-blue-900/20 overflow-x-auto">
           <TabButton
             active={activeTab === "dashboard"}
             onClick={() => setActiveTab("dashboard")}
@@ -214,7 +214,7 @@ export default function AdminPage() {
             gradient="from-purple-500 to-pink-500"
           />
         </nav>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeTab === "dashboard" && (
             <DashboardTab
               stats={statsData}
@@ -457,14 +457,14 @@ function TabButton({ active, onClick, label, icon, count, gradient }) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center space-x-3 py-3 px-6 font-medium text-sm transition-all duration-300 rounded-xl ${
+      className={`relative flex items-center shrink-0 space-x-2 py-3 px-4 font-medium text-sm transition-all duration-300 rounded-xl ${
         active
           ? `bg-gradient-to-r ${gradient} text-white shadow-lg transform scale-105`
           : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50"
       }`}
     >
       {React.cloneElement(icon, { className: "h-5 w-5" })}
-      <span className="font-semibold">{label}</span>
+      <span className="font-semibold hidden sm:inline">{label}</span>
       {count !== undefined && (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -480,6 +480,8 @@ function TabButton({ active, onClick, label, icon, count, gradient }) {
   );
 }
 
+// ... Остальные компоненты (UsersTab, InventoriesTab и их дочерние) ниже ...
+
 function UsersTab({
   users,
   totalUsers,
@@ -494,7 +496,8 @@ function UsersTab({
   const totalPages = Math.ceil(totalUsers / limit);
   return (
     <div className="space-y-6">
-      <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+      {/* Desktop View */}
+      <div className="hidden md:block bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-blue-50/30 dark:from-gray-800 dark:to-blue-900/20">
@@ -543,35 +546,50 @@ function UsersTab({
             </div>
           )}
         </div>
-        {totalUsers > limit && (
-          <div className="px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {language === "en" ? "Page" : "Стр."}{" "}
-                <span className="font-semibold">{page}</span>{" "}
-                {language === "en" ? "of" : "из"}{" "}
-                <span className="font-semibold">{totalPages}</span>
-              </span>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1 || loading}
-                  className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 shadow-sm"
-                >
-                  {language === "en" ? "Previous" : "Назад"}
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages || loading}
-                  className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 shadow-sm"
-                >
-                  {language === "en" ? "Next" : "Вперед"}
-                </button>
-              </div>
+      </div>
+
+      {/* Mobile View */}
+      <div className="md:hidden space-y-4">
+        {users.map((user) => (
+          <UserCard
+            key={user.uid}
+            user={user}
+            onToggleAdmin={onToggleAdmin}
+            onToggleBlock={onToggleBlock}
+            loading={loading}
+            language={language}
+          />
+        ))}
+      </div>
+
+      {totalUsers > limit && (
+        <div className="px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50 rounded-b-2xl">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {language === "en" ? "Page" : "Стр."}{" "}
+              <span className="font-semibold">{page}</span>{" "}
+              {language === "en" ? "of" : "из"}{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </span>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1 || loading}
+                className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 shadow-sm"
+              >
+                {language === "en" ? "Previous" : "Назад"}
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                disabled={page === totalPages || loading}
+                className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 shadow-sm"
+              >
+                {language === "en" ? "Next" : "Вперед"}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -667,6 +685,71 @@ function UserRow({ user, onToggleAdmin, onToggleBlock, loading, language }) {
   );
 }
 
+function UserCard({ user, onToggleAdmin, onToggleBlock, loading, language }) {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString(
+      language === "en" ? "en-US" : "ru-RU",
+      { year: "numeric", month: "short", day: "numeric" }
+    );
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 space-y-4">
+      <div className="flex items-center space-x-3">
+        <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+          {user.email[0].toUpperCase()}
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            {user.email}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {user.is_admin && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                Admin
+              </span>
+            )}
+            {user.is_blocked ? (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
+                Blocked
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
+                Active
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+        <CalendarIcon className="w-4 h-4 mr-2" /> {formatDate(user.created_at)}
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <button
+          onClick={() => onToggleAdmin(user)}
+          disabled={loading}
+          className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all ${
+            user.is_admin
+              ? "bg-orange-100 text-orange-700"
+              : "bg-green-100 text-green-700"
+          } disabled:opacity-50`}
+        >
+          {user.is_admin ? "Remove Admin" : "Make Admin"}
+        </button>
+        <button
+          onClick={() => onToggleBlock(user)}
+          disabled={loading}
+          className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all ${
+            user.is_blocked
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          } disabled:opacity-50`}
+        >
+          {user.is_blocked ? "Unblock" : "Block"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function InventoriesTab({ inventories, loading, language }) {
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleDateString(
@@ -681,7 +764,7 @@ function InventoriesTab({ inventories, loading, language }) {
     );
   return (
     <div className="space-y-6">
-      <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+      <div className="hidden md:block bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-purple-50/30 dark:from-gray-800 dark:to-purple-900/20">
@@ -702,47 +785,13 @@ function InventoriesTab({ inventories, loading, language }) {
             </thead>
             <tbody className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
               {inventories.map((inv) => (
-                <tr
+                <AdminInventoryRow
                   key={inv.id}
-                  className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                        <CubeIcon className="w-5 h-5" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {inv.name}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mt-1">
-                          {String(inv.id).substring(0, 8)}...
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {inv.user_email || "Unknown"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col space-y-2">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                        {inv.items_count || 0}{" "}
-                        {language === "en" ? "items" : "эл."}
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
-                        {countCustomFields(inv)}{" "}
-                        {language === "en" ? "fields" : "полей"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                      <CalendarIcon className="w-4 h-4 mr-2" />
-                      {formatDate(inv.created_at)}
-                    </div>
-                  </td>
-                </tr>
+                  inv={inv}
+                  language={language}
+                  formatDate={formatDate}
+                  countCustomFields={countCustomFields}
+                />
               ))}
             </tbody>
           </table>
@@ -759,6 +808,87 @@ function InventoriesTab({ inventories, loading, language }) {
             </div>
           )}
         </div>
+      </div>
+      <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {inventories.map((inv) => (
+          <AdminInventoryCard
+            key={inv.id}
+            inv={inv}
+            language={language}
+            formatDate={formatDate}
+            countCustomFields={countCustomFields}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdminInventoryRow({ inv, language, formatDate, countCustomFields }) {
+  return (
+    <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+            <CubeIcon className="w-5 h-5" />
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+              {inv.name}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mt-1">
+              {String(inv.id).substring(0, 8)}...
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+        {inv.user_email || "Unknown"}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex flex-col space-y-2">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+            {inv.items_count || 0} {language === "en" ? "items" : "эл."}
+          </span>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+            {countCustomFields(inv)} {language === "en" ? "fields" : "полей"}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+          <CalendarIcon className="w-4 h-4 mr-2" />
+          {formatDate(inv.created_at)}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function AdminInventoryCard({ inv, language, formatDate, countCustomFields }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 space-y-3">
+      <div>
+        <div className="font-semibold text-gray-900 dark:text-white">
+          {inv.name}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{inv.id}</div>
+      </div>
+      <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center">
+        <UserGroupIcon className="w-4 h-4 mr-2" />
+        {inv.user_email || "Unknown"}
+      </div>
+      <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center">
+        <CalendarIcon className="w-4 h-4 mr-2" />
+        {formatDate(inv.created_at)}
+      </div>
+      <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+        <span className="font-medium text-gray-800 dark:text-gray-200">
+          {inv.items_count || 0} {language === "en" ? "items" : "эл."}
+        </span>
+        <span className="font-medium text-gray-800 dark:text-gray-200">
+          {countCustomFields(inv)} {language === "en" ? "fields" : "полей"}
+        </span>
       </div>
     </div>
   );

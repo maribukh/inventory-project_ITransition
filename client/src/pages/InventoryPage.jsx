@@ -14,7 +14,92 @@ import {
   CheckIcon,
   Cog6ToothIcon,
   EyeIcon,
-} from "@heroicons/react/20/solid";
+  MagnifyingGlassIcon,
+  CubeIcon,
+} from "@heroicons/react/24/outline";
+
+const fieldIcons = {
+  string: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
+      />
+    </svg>
+  ),
+  text: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 9h16.5m-16.5 6.75h16.5"
+      />
+    </svg>
+  ),
+  number: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.125 1.125 0 010 2.25H5.625a1.125 1.125 0 010-2.25z"
+      />
+    </svg>
+  ),
+  boolean: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.5 12.75l6 6 9-13.5"
+      />
+    </svg>
+  ),
+  link: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
+      />
+    </svg>
+  ),
+};
 
 export default function InventoryPage() {
   const { id: inventoryId } = useParams();
@@ -57,10 +142,14 @@ export default function InventoryPage() {
     if (!lowerSearch) return allItems;
     return allItems.filter(
       (item) =>
-        item.search_text?.toLowerCase().includes(lowerSearch) ||
-        item.custom_id?.toLowerCase().includes(lowerSearch)
+        (item.custom_id &&
+          item.custom_id.toLowerCase().includes(lowerSearch)) ||
+        fieldsSchema.some((field) => {
+          const value = item[field.key];
+          return value && String(value).toLowerCase().includes(lowerSearch);
+        })
     );
-  }, [allItems, searchTerm]);
+  }, [allItems, searchTerm, fieldsSchema]);
 
   useEffect(() => {
     if (checkboxRef.current) {
@@ -81,9 +170,7 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["items", inventoryId] });
       handleCloseModal();
     },
-    onError: (err) => {
-      toast.error(err.message || t.error);
-    },
+    onError: (err) => toast.error(err.message || t.error),
   };
 
   const createItemMutation = useMutation({
@@ -95,7 +182,6 @@ export default function InventoryPage() {
       toast.success(t.itemCreatedSuccess);
     },
   });
-
   const updateItemMutation = useMutation({
     ...mutationOptions,
     mutationFn: ({ inventoryId, itemId, data, customId }) =>
@@ -105,7 +191,6 @@ export default function InventoryPage() {
       toast.success(t.itemUpdatedSuccess);
     },
   });
-
   const deleteItemsMutation = useMutation({
     mutationFn: (itemIds) =>
       Promise.all(itemIds.map((id) => deleteItem(inventoryId, id))),
@@ -114,9 +199,7 @@ export default function InventoryPage() {
       setSelectedItems(new Set());
       toast.success(t.itemsDeletedSuccess);
     },
-    onError: () => {
-      toast.error(t.itemsDeletedError);
-    },
+    onError: () => toast.error(t.itemsDeletedError),
   });
 
   const handleOpenModal = (type, item = null) => {
@@ -141,11 +224,8 @@ export default function InventoryPage() {
   };
 
   const handleEditOnToolbar = () => {
-    if (singleSelectedItem) {
-      handleOpenModal("edit", singleSelectedItem);
-    }
+    if (singleSelectedItem) handleOpenModal("edit", singleSelectedItem);
   };
-
   const handleCloseModal = () => {
     setActiveModal(null);
     setEditingItem(null);
@@ -156,7 +236,6 @@ export default function InventoryPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const finalCustomId = customId.trim() === "" ? null : customId.trim();
-
     if (activeModal === "edit" && editingItem) {
       updateItemMutation.mutate({
         inventoryId,
@@ -196,13 +275,9 @@ export default function InventoryPage() {
     }
   };
 
-  const handleDeleteSelected = () => {
-    setConfirmOpen(true);
-  };
-
-  const confirmDelete = () => {
+  const handleDeleteSelected = () => setConfirmOpen(true);
+  const confirmDelete = () =>
     deleteItemsMutation.mutate(Array.from(selectedItems));
-  };
 
   if (isLoading)
     return <div className="p-8 text-center">{t.loadingInventory}</div>;
@@ -213,41 +288,55 @@ export default function InventoryPage() {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {inventory?.name}
-            </h1>
-            {!isOwner && (
-              <span className="inline-flex items-center gap-x-1.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                <EyeIcon className="h-3 w-3" />
-                {t.readOnly}
-              </span>
-            )}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 shadow-lg mb-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                {inventory?.name}
+              </h1>
+              {!isOwner && (
+                <span className="inline-flex items-center gap-x-1.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  <EyeIcon className="h-4 w-4" />
+                  {t.readOnly}
+                </span>
+              )}
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              {inventory?.description}
+            </p>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {inventory?.description} ( {allItems.length} {t.itemsCount} )
-          </p>
+          {isOwner && (
+            <div className="flex space-x-3 flex-shrink-0">
+              <Link
+                to={`/inventory/${inventoryId}/edit`}
+                className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Cog6ToothIcon className="w-5 h-5 mr-2" />
+                {t.settings || "Settings"}
+              </Link>
+              <button
+                onClick={() => handleOpenModal("create")}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
+              >
+                <PlusIcon className="w-5 h-5 mr-2" />
+                {t.addNewItem}
+              </button>
+            </div>
+          )}
         </div>
-        {isOwner && (
-          <div className="flex space-x-3">
-            <Link
-              to={`/inventory/${inventoryId}/edit`}
-              className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            >
-              <Cog6ToothIcon className="w-5 h-5 mr-2" />
-              {t.settings || "Settings"}
-            </Link>
-            <button
-              onClick={() => handleOpenModal("create")}
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
-            >
-              <PlusIcon className="w-5 h-5 mr-2" />
-              {t.addNewItem}
-            </button>
+        <div className="relative mt-6">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
           </div>
-        )}
+          <input
+            type="text"
+            placeholder={t.searchItemsPlaceholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          />
+        </div>
       </div>
 
       {isOwner && (
@@ -261,20 +350,12 @@ export default function InventoryPage() {
         />
       )}
 
-      <input
-        type="text"
-        placeholder={t.searchItemsPlaceholder}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full px-4 py-2 mb-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-      />
-
-      <div className="flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+      {filteredItems.length > 0 ? (
+        <>
+          <div className="hidden md:block bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
                     {isOwner && (
                       <th
@@ -284,7 +365,7 @@ export default function InventoryPage() {
                         <input
                           ref={checkboxRef}
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+                          className="absolute left-4 top-1.2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                           checked={
                             filteredItems.length > 0 &&
                             selectedItems.size === filteredItems.length
@@ -310,7 +391,7 @@ export default function InventoryPage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredItems.map((item) => (
                     <ItemRow
                       key={item.id}
@@ -323,17 +404,30 @@ export default function InventoryPage() {
                   ))}
                 </tbody>
               </table>
-              {filteredItems.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                    {t.noItemsFound}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
+
+          <div className="grid md:hidden grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                fieldsSchema={fieldsSchema}
+                isSelected={selectedItems.has(item.id)}
+                onSelect={() => toggleSelectItem(item.id)}
+                isOwner={isOwner}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-20 bg-white dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+          <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+            {t.noItemsFound}
+          </h3>
         </div>
-      </div>
+      )}
 
       {(activeModal === "create" || activeModal === "edit") && (
         <ItemModal
@@ -350,7 +444,6 @@ export default function InventoryPage() {
           loading={createItemMutation.isPending || updateItemMutation.isPending}
         />
       )}
-
       <ConfirmModal
         isOpen={isConfirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -358,6 +451,45 @@ export default function InventoryPage() {
         title={t.deleteSelected}
         message={t.confirmDeleteItems.replace("{count}", selectedItems.size)}
       />
+    </div>
+  );
+}
+
+function ItemCard({ item, fieldsSchema, isSelected, onSelect, isOwner }) {
+  return (
+    <div
+      className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-md border transition-all duration-300 group ${
+        isSelected
+          ? "border-indigo-500 ring-2 ring-indigo-500"
+          : "border-gray-200 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1"
+      }`}
+    >
+      {isOwner && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onSelect}
+          className="absolute top-4 right-4 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+        />
+      )}
+      <div className="p-5">
+        <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+          {item.custom_id || `ID: ${item.id}`}
+        </p>
+        <div className="mt-4 space-y-3">
+          {fieldsSchema.map((field) => (
+            <div key={field.key}>
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center">
+                <span className="mr-2">{fieldIcons[field.type]}</span>
+                {field.label}
+              </div>
+              <div className="text-sm text-gray-900 dark:text-white mt-1 break-words">
+                <RenderFieldValue field={field} value={item[field.key]} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -372,7 +504,7 @@ function ItemsToolbar({
 }) {
   if (selectedCount === 0) return null;
   return (
-    <div className="mb-4 p-3 flex justify-between items-center bg-gray-100 dark:bg-gray-800 rounded-lg shadow-sm">
+    <div className="mb-4 p-3 flex justify-between items-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50">
       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
         {selectedCount} {t.itemsSelected}
       </span>
@@ -380,7 +512,7 @@ function ItemsToolbar({
         <button
           onClick={onEdit}
           disabled={!editEnabled || mutationLoading}
-          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <PencilSquareIcon className="w-5 h-5 mr-2" />
           {t.edit}
@@ -388,7 +520,7 @@ function ItemsToolbar({
         <button
           onClick={onDelete}
           disabled={mutationLoading}
-          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-red-500 dark:hover:bg-red-600"
+          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <TrashIcon className="w-5 h-5 mr-2" />
           {mutationLoading ? t.deleting : t.deleteSelected}
@@ -452,7 +584,7 @@ function ItemModal({
     setFormData((prev) => ({ ...prev, [key]: value }));
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-60"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
@@ -590,5 +722,5 @@ function RenderFieldValue({ field, value }) {
       </a>
     );
   }
-  return <span className="line-clamp-2 break-words">{String(value)}</span>;
+  return <span className="break-words">{String(value)}</span>;
 }

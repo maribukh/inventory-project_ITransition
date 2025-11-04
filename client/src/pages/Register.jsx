@@ -21,6 +21,7 @@ function PasswordStrength({ password }) {
 
   const getStrength = (pass) => {
     let score = 0;
+    if (!pass) return 0;
     if (pass.length >= 8) score++;
     if (pass.match(/[a-z]/) && pass.match(/[A-Z]/)) score++;
     if (pass.match(/\d/)) score++;
@@ -64,7 +65,7 @@ function PasswordStrength({ password }) {
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 mt-4">
       <div className="flex justify-between items-center">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {t.passwordStrength || "Password strength"}
@@ -85,12 +86,11 @@ function PasswordStrength({ password }) {
           {strengthLabels[strength]}
         </span>
       </div>
-
       <div className="flex space-x-1">
-        {[0, 1, 2, 3, 4].map((index) => (
+        {[1, 2, 3, 4].map((index) => (
           <div
             key={index}
-            className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
               index < strength
                 ? strengthColors[strength]
                 : "bg-gray-200 dark:bg-gray-700"
@@ -98,8 +98,7 @@ function PasswordStrength({ password }) {
           />
         ))}
       </div>
-
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-2">
         {requirements.map((req, index) => (
           <div key={index} className="flex items-center space-x-2">
             {req.met ? (
@@ -108,7 +107,7 @@ function PasswordStrength({ password }) {
               <XCircleIcon className="h-4 w-4 text-gray-400" />
             )}
             <span
-              className={`text-sm ${
+              className={`text-xs ${
                 req.met
                   ? "text-green-600 dark:text-green-400"
                   : "text-gray-500 dark:text-gray-400"
@@ -140,51 +139,39 @@ export default function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.email) {
       newErrors.email = `${t.emailAddress} ${t.required}`;
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = t.invalidEmail;
     }
-
     if (!formData.password) {
       newErrors.password = `${t.password} ${t.required}`;
     } else if (formData.password.length < 6) {
-      newErrors.password = t.passwordMinLength;
+      newErrors.password =
+        t.passwordMinLength || "Password must be at least 6 characters";
     }
-
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t.confirmPasswordRequired;
+      newErrors.confirmPassword =
+        t.confirmPasswordRequired || "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t.passwordsDoNotMatch;
+      newErrors.confirmPassword =
+        t.passwordsDoNotMatch || "Passwords do not match";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleEmailRegister = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(
@@ -192,30 +179,29 @@ export default function Register() {
         formData.email,
         formData.password
       );
-      toast.success("🎉 " + t.accountCreatedWelcome);
+      toast.success(
+        "🎉 " + (t.accountCreatedWelcome || "Account created! Welcome.")
+      );
       navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
-      let errorMessage = t.accountCreationFailed;
-
+      let errorMessage = t.accountCreationFailed || "Failed to create account.";
       switch (error.code) {
         case "auth/email-already-in-use":
-          errorMessage = t.emailAlreadyInUse;
+          errorMessage = t.emailAlreadyInUse || "This email is already in use.";
           break;
         case "auth/invalid-email":
           errorMessage = t.invalidEmail;
           break;
         case "auth/operation-not-allowed":
-          errorMessage =
-            "Email/password sign-up is not enabled. Please use Google Sign-In or enable it in Firebase Console.";
+          errorMessage = "Email/password sign-up is not enabled.";
           break;
         case "auth/weak-password":
-          errorMessage = t.weakPassword;
+          errorMessage = t.weakPassword || "The password is too weak.";
           break;
         default:
           errorMessage = error.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -224,31 +210,32 @@ export default function Register() {
 
   const handleGoogleRegister = async () => {
     setGoogleLoading(true);
-
     try {
       const result = await signInWithPopup(auth, googleProvider);
       toast.success(
-        `🎉 ${t.welcome}, ${result.user.displayName || result.user.email}!`
+        `🎉 ${t.welcome || "Welcome"}, ${
+          result.user.displayName || result.user.email
+        }!`
       );
       navigate("/");
     } catch (error) {
       console.error("Google registration error:", error);
-      let errorMessage = t.googleSignUpFailed;
-
+      let errorMessage = t.googleSignUpFailed || "Google sign up failed.";
       switch (error.code) {
         case "auth/popup-closed-by-user":
-          errorMessage = t.signUpCancelled;
+          errorMessage = t.signUpCancelled || "Sign up was cancelled.";
           break;
         case "auth/popup-blocked":
-          errorMessage = t.popupBlocked;
+          errorMessage =
+            t.popupBlocked || "Popups are blocked by your browser.";
           break;
         case "auth/unauthorized-domain":
-          errorMessage = t.unauthorizedDomain;
+          errorMessage =
+            t.unauthorizedDomain || "This domain is not authorized.";
           break;
         default:
           errorMessage = error.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setGoogleLoading(false);
@@ -259,22 +246,12 @@ export default function Register() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        duration: 0.5,
-        staggerChildren: 0.1,
-      },
+      transition: { duration: 0.5, staggerChildren: 0.1 },
     },
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-      },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
   return (
@@ -297,7 +274,6 @@ export default function Register() {
                 </span>
               </Link>
             </motion.div>
-
             <motion.div variants={itemVariants}>
               <h2 className="mt-6 text-3xl font-bold bg-gradient-to-r from-gray-900 to-indigo-600 dark:from-white dark:to-indigo-400 bg-clip-text text-transparent">
                 {t.joinInventoro}
@@ -312,15 +288,7 @@ export default function Register() {
                 </Link>
               </p>
             </motion.div>
-
             <motion.div className="mt-8" variants={itemVariants}>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <p className="text-yellow-800 text-sm">
-                  <strong>Note:</strong> Email registration requires additional
-                  setup. Please use Google Sign-In for immediate access.
-                </p>
-              </div>
-
               <motion.div
                 className="mb-6"
                 whileHover={{ scale: 1.02 }}
@@ -359,7 +327,6 @@ export default function Register() {
                   )}
                 </button>
               </motion.div>
-
               <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300 dark:border-gray-600" />
@@ -370,7 +337,6 @@ export default function Register() {
                   </span>
                 </div>
               </div>
-
               <motion.form
                 onSubmit={handleEmailRegister}
                 className="space-y-5"
@@ -418,7 +384,6 @@ export default function Register() {
                     </motion.p>
                   )}
                 </motion.div>
-
                 <motion.div variants={itemVariants}>
                   <label
                     htmlFor="password"
@@ -470,7 +435,6 @@ export default function Register() {
                     </motion.p>
                   )}
                 </motion.div>
-
                 <motion.div variants={itemVariants}>
                   <label
                     htmlFor="confirmPassword"
@@ -521,7 +485,6 @@ export default function Register() {
                     </motion.p>
                   )}
                 </motion.div>
-
                 <motion.div variants={itemVariants}>
                   <motion.button
                     type="submit"
@@ -540,7 +503,6 @@ export default function Register() {
                     )}
                   </motion.button>
                 </motion.div>
-
                 <motion.div variants={itemVariants} className="text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {t.byCreatingAccount}{" "}
@@ -563,7 +525,6 @@ export default function Register() {
             </motion.div>
           </motion.div>
         </div>
-
         <div className="relative hidden lg:block flex-1">
           <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-indigo-500 to-purple-600">
             <div className="flex items-center justify-center h-full">
@@ -589,32 +550,24 @@ export default function Register() {
                     </svg>
                   </div>
                   <h3 className="text-3xl font-bold mb-4">
-                    {t.organizeEverything}
+                    {t.organizeEverything || "Organize Everything"}
                   </h3>
-                  <p className="text-indigo-100 text-lg">{t.startManaging}</p>
+                  <p className="text-indigo-100 text-lg">
+                    {t.startManaging ||
+                      "Start managing your collections with ease."}
+                  </p>
                 </motion.div>
               </div>
             </div>
           </div>
-
           <motion.div
             className="absolute top-1/4 left-1/4 w-8 h-8 bg-white/20 rounded-full backdrop-blur-sm"
-            animate={{
-              y: [0, -20, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
             className="absolute bottom-1/3 right-1/3 w-6 h-6 bg-white/30 rounded-full backdrop-blur-sm"
-            animate={{
-              y: [0, 15, 0],
-              scale: [1, 1.2, 1],
-            }}
+            animate={{ y: [0, 15, 0], scale: [1, 1.2, 1] }}
             transition={{
               duration: 3,
               repeat: Infinity,
