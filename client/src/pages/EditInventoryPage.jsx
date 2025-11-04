@@ -235,7 +235,9 @@ export default function EditInventoryPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4">{t.manage}</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                {t.manage}
+              </h2>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t.inventoryName}*
@@ -261,7 +263,9 @@ export default function EditInventoryPage() {
               </div>
             </div>
             <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4">{t.fields}</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                {t.fields}
+              </h2>
               <div className="min-h-[200px] space-y-3">
                 <DndContext
                   sensors={sensors}
@@ -292,7 +296,9 @@ export default function EditInventoryPage() {
           </div>
           <div className="lg:col-span-1 space-y-6">
             <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4">{t.visibility}</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                {t.visibility}
+              </h2>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {isPublic ? t.visibilityPublic : t.visibilityPrivate}
@@ -313,7 +319,7 @@ export default function EditInventoryPage() {
               </div>
             </div>
             <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 {t.addCustomFields}
               </h2>
               <div className="grid grid-cols-1 gap-2">
