@@ -480,7 +480,6 @@ function TabButton({ active, onClick, label, icon, count, gradient }) {
   );
 }
 
-// ... Остальные компоненты (UsersTab, InventoriesTab и их дочерние) ниже ...
 
 function UsersTab({
   users,
@@ -496,7 +495,6 @@ function UsersTab({
   const totalPages = Math.ceil(totalUsers / limit);
   return (
     <div className="space-y-6">
-      {/* Desktop View */}
       <div className="hidden md:block bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
