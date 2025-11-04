@@ -155,6 +155,7 @@ Run the Server:
 npm run dev
 
 Demo: https://inventory-client-yh25.onrender.com/
+Server: https://inventory-server-lb56.onrender.com/
 
 The server will be running on http://localhost:4000.
 
