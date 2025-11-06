@@ -18,89 +18,6 @@ import {
   CubeIcon,
 } from "@heroicons/react/24/outline";
 
-const fieldIcons = {
-  string: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
-      />
-    </svg>
-  ),
-  text: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 9h16.5m-16.5 6.75h16.5"
-      />
-    </svg>
-  ),
-  number: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.125 1.125 0 010 2.25H5.625a1.125 1.125 0 010-2.25z"
-      />
-    </svg>
-  ),
-  boolean: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4.5 12.75l6 6 9-13.5"
-      />
-    </svg>
-  ),
-  link: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-4 h-4"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
-      />
-    </svg>
-  ),
-};
-
 export default function InventoryPage() {
   const { id: inventoryId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,11 +43,9 @@ export default function InventoryPage() {
     enabled: !!inventoryId,
   });
 
-  const {
-    inventory,
-    items: allItems = [],
-    fieldsSchema = [],
-  } = inventoryData || {};
+  const inventory = inventoryData?.inventory;
+  const allItems = inventoryData?.items || [];
+  const fieldsSchema = inventoryData?.inventory?.fieldsSchema || [];
 
   const isOwner = useMemo(() => {
     if (!inventory || !user) return false;
@@ -182,6 +97,7 @@ export default function InventoryPage() {
       toast.success(t.itemCreatedSuccess);
     },
   });
+
   const updateItemMutation = useMutation({
     ...mutationOptions,
     mutationFn: ({ inventoryId, itemId, data, customId }) =>
@@ -191,6 +107,7 @@ export default function InventoryPage() {
       toast.success(t.itemUpdatedSuccess);
     },
   });
+
   const deleteItemsMutation = useMutation({
     mutationFn: (itemIds) =>
       Promise.all(itemIds.map((id) => deleteItem(inventoryId, id))),
@@ -226,6 +143,7 @@ export default function InventoryPage() {
   const handleEditOnToolbar = () => {
     if (singleSelectedItem) handleOpenModal("edit", singleSelectedItem);
   };
+
   const handleCloseModal = () => {
     setActiveModal(null);
     setEditingItem(null);
@@ -351,75 +269,60 @@ export default function InventoryPage() {
       )}
 
       {filteredItems.length > 0 ? (
-        <>
-          <div className="hidden md:block bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
-                  <tr>
-                    {isOwner && (
-                      <th
-                        scope="col"
-                        className="relative w-12 px-6 sm:w-16 sm:px-8"
-                      >
-                        <input
-                          ref={checkboxRef}
-                          type="checkbox"
-                          className="absolute left-4 top-1.2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
-                          checked={
-                            filteredItems.length > 0 &&
-                            selectedItems.size === filteredItems.length
-                          }
-                          onChange={toggleSelectAll}
-                        />
-                      </th>
-                    )}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <tr>
+                  {isOwner && (
                     <th
+                      scope="col"
+                      className="relative w-12 px-6 sm:w-16 sm:px-8"
+                    >
+                      <input
+                        ref={checkboxRef}
+                        type="checkbox"
+                        className="absolute left-4 top-1.2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+                        checked={
+                          filteredItems.length > 0 &&
+                          selectedItems.size === filteredItems.length
+                        }
+                        onChange={toggleSelectAll}
+                      />
+                    </th>
+                  )}
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                  >
+                    {t.customId}
+                  </th>
+                  {fieldsSchema.map((field) => (
+                    <th
+                      key={field.key}
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                     >
-                      {t.customId}
+                      {field.label}
                     </th>
-                    {fieldsSchema.map((field) => (
-                      <th
-                        key={field.key}
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
-                      >
-                        {field.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredItems.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      fieldsSchema={fieldsSchema}
-                      isSelected={selectedItems.has(item.id)}
-                      onSelect={() => toggleSelectItem(item.id)}
-                      isOwner={isOwner}
-                    />
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredItems.map((item) => (
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    fieldsSchema={fieldsSchema}
+                    isSelected={selectedItems.has(item.id)}
+                    onSelect={() => toggleSelectItem(item.id)}
+                    isOwner={isOwner}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <div className="grid md:hidden grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                fieldsSchema={fieldsSchema}
-                isSelected={selectedItems.has(item.id)}
-                onSelect={() => toggleSelectItem(item.id)}
-                isOwner={isOwner}
-              />
-            ))}
-          </div>
-        </>
+        </div>
       ) : (
         <div className="text-center py-20 bg-white dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
           <CubeIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -451,45 +354,6 @@ export default function InventoryPage() {
         title={t.deleteSelected}
         message={t.confirmDeleteItems.replace("{count}", selectedItems.size)}
       />
-    </div>
-  );
-}
-
-function ItemCard({ item, fieldsSchema, isSelected, onSelect, isOwner }) {
-  return (
-    <div
-      className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-md border transition-all duration-300 group ${
-        isSelected
-          ? "border-indigo-500 ring-2 ring-indigo-500"
-          : "border-gray-200 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1"
-      }`}
-    >
-      {isOwner && (
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={onSelect}
-          className="absolute top-4 right-4 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
-        />
-      )}
-      <div className="p-5">
-        <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-          {item.custom_id || `ID: ${item.id}`}
-        </p>
-        <div className="mt-4 space-y-3">
-          {fieldsSchema.map((field) => (
-            <div key={field.key}>
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center">
-                <span className="mr-2">{fieldIcons[field.type]}</span>
-                {field.label}
-              </div>
-              <div className="text-sm text-gray-900 dark:text-white mt-1 break-words">
-                <RenderFieldValue field={field} value={item[field.key]} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

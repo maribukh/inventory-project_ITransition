@@ -100,13 +100,12 @@ export async function updateAdminUser(uid, data) {
   });
 }
 export async function getAdminInventories() {
-  return fetchWithAuth(`/api/admin/inventories`);
+  return fetchWithAuth(я`/api/admin/inventories`);
 }
 export async function getAdminStats() {
   return fetchWithAuth(`/api/admin/stats`);
 }
 
-// НОВАЯ ФУНКЦИЯ
 export async function updateInventory(inventoryId, data) {
   return fetchWithAuth(`/api/inventories/${inventoryId}`, {
     method: "PUT",
