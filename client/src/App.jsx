@@ -7,10 +7,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./pages/Dashboard";
 import InventoryPage from "./pages/InventoryPage";
-import EditInventoryPage from "./pages/EditInventoryPage"; 
+import EditInventoryPage from "./pages/EditInventoryPage";
 import AdminPage from "./pages/AdminPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -30,6 +31,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* V-- ДОБАВЛЕННЫЙ МАРШРУТ --V */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* ^-- ДОБАВЛЕННЫЙ МАРШРУТ --^ */}
             <Route
               path="/inventory/:id"
               element={

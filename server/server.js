@@ -6,6 +6,7 @@ import itemsRoutes from "./routes/items.js";
 import searchRoutes from "./routes/search.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/user.js";
 import pool from "./utils/db.js";
 
 dotenv.config();
@@ -19,6 +20,7 @@ app.use("/api/items", itemsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/api/debug/db", async (req, res) => {
   try {

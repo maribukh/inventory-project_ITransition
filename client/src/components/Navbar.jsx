@@ -17,6 +17,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   MagnifyingGlassIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import SearchBar from "./SearchBar";
 
@@ -156,6 +157,19 @@ export default function Navbar() {
                     leaveTo="transform opacity-0 scale-95"
                   >
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white/95 dark:bg-gray-700/95 backdrop-blur-md py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-200 dark:border-gray-600">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            to="/profile"
+                            className={`${
+                              active ? "bg-gray-100 dark:bg-gray-600" : ""
+                            } flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 transition-colors`}
+                          >
+                            <UserCircleIcon className="mr-2 h-4 w-4" />
+                            Profile
+                          </Link>
+                        )}
+                      </Menu.Item>
                       {isAdmin && (
                         <Menu.Item>
                           {({ active }) => (

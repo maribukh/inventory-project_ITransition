@@ -100,7 +100,7 @@ export async function updateAdminUser(uid, data) {
   });
 }
 export async function getAdminInventories() {
-  return fetchWithAuth(я`/api/admin/inventories`);
+  return fetchWithAuth(`/api/admin/inventories`);
 }
 export async function getAdminStats() {
   return fetchWithAuth(`/api/admin/stats`);
@@ -109,6 +109,13 @@ export async function getAdminStats() {
 export async function updateInventory(inventoryId, data) {
   return fetchWithAuth(`/api/inventories/${inventoryId}`, {
     method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function syncSalesforce(data) {
+  return fetchWithAuth(`/api/user/sync-salesforce`, {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
