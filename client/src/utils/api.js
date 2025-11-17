@@ -119,3 +119,10 @@ export async function syncSalesforce(data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function completeSalesforceSync(code, codeVerifier) {
+  return fetchWithAuth(`/api/user/salesforce-callback`, {
+    method: "POST",
+    body: JSON.stringify({ code, codeVerifier }),
+  });
+}

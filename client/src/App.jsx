@@ -12,6 +12,7 @@ import AdminPage from "./pages/AdminPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProfilePage from "./pages/ProfilePage";
+import SalesforceCallback from "./pages/SalesforceCallback";
 
 function App() {
   return (
@@ -31,7 +32,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* V-- ДОБАВЛЕННЫЙ МАРШРУТ --V */}
             <Route
               path="/profile"
               element={
@@ -40,7 +40,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* ^-- ДОБАВЛЕННЫЙ МАРШРУТ --^ */}
             <Route
               path="/inventory/:id"
               element={
@@ -63,6 +62,14 @@ function App() {
                 <AdminRoute>
                   <AdminPage />
                 </AdminRoute>
+              }
+            />
+            <Route
+              path="/salesforce/callback"
+              element={
+                <ProtectedRoute>
+                  <SalesforceCallback />
+                </ProtectedRoute>
               }
             />
             <Route path="*" element={<div>404 - Page Not Found</div>} />
