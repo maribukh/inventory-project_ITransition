@@ -1,3 +1,5 @@
+// client/src/pages/SalesforceCallback.jsx
+
 import React, { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { completeSalesforceSync } from "../utils/api";
@@ -6,7 +8,7 @@ import toast from "react-hot-toast";
 export default function SalesforceCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const hasRun = useRef(false); 
+  const hasRun = useRef(false);
 
   useEffect(() => {
     if (hasRun.current) {
@@ -16,12 +18,15 @@ export default function SalesforceCallback() {
 
     const code = searchParams.get("code");
     const codeVerifier = localStorage.getItem("salesforce_code_verifier");
+    const formDataString = localStorage.getItem("salesforce_form_data");
+    const formData = formDataString ? JSON.parse(formDataString) : {};
 
     localStorage.removeItem("salesforce_code_verifier");
+    localStorage.removeItem("salesforce_form_data");
 
     if (code && codeVerifier) {
       toast.loading("Finalizing Salesforce connection...");
-      completeSalesforceSync(code, codeVerifier)
+      completeSalesforceSync(code, codeVerifier, formData)
         .then((response) => {
           toast.dismiss();
           toast.success(response.message || "Successfully connected!");

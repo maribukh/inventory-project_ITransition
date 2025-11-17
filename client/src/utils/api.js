@@ -1,3 +1,5 @@
+// client/src/utils/api.js
+
 import { auth } from "./firebase.client";
 
 async function getIdToken() {
@@ -120,9 +122,9 @@ export async function syncSalesforce(data) {
   });
 }
 
-export async function completeSalesforceSync(code, codeVerifier) {
+export async function completeSalesforceSync(code, codeVerifier, formData) {
   return fetchWithAuth(`/api/user/salesforce-callback`, {
     method: "POST",
-    body: JSON.stringify({ code, codeVerifier }),
+    body: JSON.stringify({ code, codeVerifier, formData }),
   });
 }
