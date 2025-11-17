@@ -1,9 +1,9 @@
 import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
-import { syncWithSalesforce } from "../controllers/userController.js";
+import { handleSalesforceCallback } from "../controllers/userController.js";
 
 const router = express.Router();
 
-router.post("/sync-salesforce", authMiddleware, syncWithSalesforce);
+router.post("/salesforce-callback", authMiddleware, handleSalesforceCallback);
 
 export default router;

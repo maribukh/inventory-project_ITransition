@@ -64,8 +64,8 @@ async function getInventories(req, res) {
     const uid = req.user.uid;
 
     const query = `
-      SELECT 
-        i.*, 
+      SELECT
+        i.*,
         u.email as user_email,
         (SELECT COUNT(*) FROM items WHERE inventory_id = i.id) as items_count
       FROM inventories i
@@ -176,12 +176,11 @@ async function getInventory(req, res) {
     res.status(500).json({ error: "getInventory error" });
   }
 }
-
 async function updateInventory(req, res) {
   try {
     const { inventoryId } = req.params;
     const uid = req.user.uid;
-    const { name, description, fieldsSchema } = req.body;
+    const { name, description, fieldsSchema, is_public } = req.body;
 
     const { updates, values } = mapSchemaToQuery(fieldsSchema);
 
@@ -192,6 +191,10 @@ async function updateInventory(req, res) {
     if (description !== undefined) {
       updates.push(`description = $${values.length + 1}`);
       values.push(description);
+    }
+    if (typeof is_public === "boolean") {
+      updates.push(`is_public = $${values.length + 1}`);
+      values.push(is_public);
     }
 
     values.push(inventoryId);

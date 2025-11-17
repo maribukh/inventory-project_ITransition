@@ -4,14 +4,26 @@ import pool from "../utils/db.js";
 async function getAllUsers(req, res) {
   try {
     const { limit = 50, page = 1 } = req.query;
-    const result = await pool.query(
+    const offset = (page - 1) * limit;
+
+    const usersQuery = pool.query(
       `SELECT uid, email, is_admin, is_blocked, created_at FROM users
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, (page - 1) * limit]
+      [limit, offset]
     );
 
-    res.json({ users: result.rows, total: result.rowCount });
+    const totalCountQuery = pool.query("SELECT COUNT(*) FROM users");
+
+    const [usersResult, totalResult] = await Promise.all([
+      usersQuery,
+      totalCountQuery,
+    ]);
+
+    res.json({
+      users: usersResult.rows,
+      total: parseInt(totalResult.rows[0].count, 10),
+    });
   } catch (err) {
     console.error("Get users error:", err);
     res.status(500).json({ error: "Failed to get users" });
@@ -28,22 +40,21 @@ async function updateUser(req, res) {
     }
 
     const updates = [];
-    const values = [uid];
+    const values = [];
     if (typeof isAdmin === "boolean") {
+      updates.push(`is_admin = $${values.length + 2}`);
       values.push(isAdmin);
-      updates.push(`is_admin = $${values.length}`);
     }
     if (typeof isBlocked === "boolean") {
+      updates.push(`is_blocked = $${values.length + 2}`);
       values.push(isBlocked);
-      updates.push(`is_blocked = $${values.length}`);
     }
 
     if (updates.length > 0) {
-      await pool.query(
-        `UPDATE users SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
-         WHERE uid = $1`,
-        values
-      );
+      const query = `UPDATE users SET ${updates.join(
+        ", "
+      )}, updated_at = CURRENT_TIMESTAMP WHERE uid = $1`;
+      await pool.query(query, [uid, ...values]);
     }
 
     res.json({ success: true });
