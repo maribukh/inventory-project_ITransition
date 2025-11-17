@@ -3,8 +3,9 @@ import axios from "axios";
 const SF_LOGIN_URL = process.env.SF_LOGIN_URL;
 const SF_CLIENT_ID = process.env.SF_CLIENT_ID;
 const SF_CLIENT_SECRET = process.env.SF_CLIENT_SECRET;
-const REDIRECT_URI = "http://localhost:3000/salesforce/callback";
-
+const REDIRECT_URI = process.env.CLIENT_URL
+  ? `${process.env.CLIENT_URL}/salesforce/callback`
+  : "http://localhost:3000/salesforce/callback";
 async function handleSalesforceCallback(req, res) {
   try {
     const { code, codeVerifier } = req.body;
@@ -66,7 +67,6 @@ async function handleSalesforceCallback(req, res) {
     );
     const accountId = accountResponse.data.id;
 
- 
     await axios.post(
       `${instance_url}/services/data/v59.0/sobjects/Contact`,
       {
@@ -74,7 +74,7 @@ async function handleSalesforceCallback(req, res) {
         FirstName: sfUser.given_name || "User",
         Email: email,
         AccountId: accountId,
-        External_ID__c: uid, 
+        External_ID__c: uid,
       },
       { headers }
     );
@@ -85,8 +85,8 @@ async function handleSalesforceCallback(req, res) {
     });
   } catch (error) {
     const errorMessage =
-      error.response?.data?.[0]?.message || 
-      error.response?.data?.error_description || 
+      error.response?.data?.[0]?.message ||
+      error.response?.data?.error_description ||
       error.message ||
       "Failed to process Salesforce callback.";
 
