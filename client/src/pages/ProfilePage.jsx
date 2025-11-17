@@ -1,5 +1,3 @@
-// client/src/pages/ProfilePage.jsx
-
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -44,8 +42,9 @@ export default function ProfilePage() {
 
       const SALESFORCE_CLIENT_ID =
         "3MVG9dAEux2v1sLsC3_r8mis.ioHYWnO8668jsbOPHXAFjSe.9sUGh5E.m0UQWQEOeWSUIuMpVPw6f3kSddtB";
-      const REDIRECT_URI = "http://localhost:3000/salesforce/callback";
-
+      const REDIRECT_URI = `${
+        import.meta.env.VITE_APP_URL
+      }/salesforce/callback`;
       const authUrl = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CLIENT_ID}&redirect_uri=${encodeURIComponent(
         REDIRECT_URI
       )}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
