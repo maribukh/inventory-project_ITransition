@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import inventoriesRoutes from "./routes/inventories.js";
 import itemsRoutes from "./routes/items.js";
 import searchRoutes from "./routes/search.js";
@@ -8,8 +10,6 @@ import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/user.js";
 import pool from "./utils/db.js";
-
-dotenv.config();
 
 const app = express();
 app.use(cors());
