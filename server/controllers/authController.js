@@ -1,3 +1,5 @@
+// --- Файл: /server/src/controllers/authController.js ---
+
 import pool from "../utils/db.js";
 
 async function createUserRecord(req, res) {
@@ -12,21 +14,23 @@ async function createUserRecord(req, res) {
     const isFirstUser = parseInt(countResult.rows[0].count, 10) === 0;
     const isAdmin = isFirstUser;
 
-    const newUser = await pool.query(
+    const newUserResult = await pool.query(
       `INSERT INTO users (uid, email, is_admin)
        VALUES ($1, $2, $3)
-       ON CONFLICT(email) DO NOTHING
-       RETURNING *`,
+       ON CONFLICT(uid) DO NOTHING
+       RETURNING uid, is_admin, created_at`,
       [uid, email, isAdmin]
     );
 
-    if (newUser.rows.length > 0) {
+    if (newUserResult.rows.length > 0) {
+      const newUser = newUserResult.rows[0];
       return res.json({
         success: true,
-        isAdmin: isAdmin,
-        message: isFirstUser
-          ? "First user - admin rights granted"
-          : "User record created",
+        isAdmin: newUser.is_admin,
+        message:
+          isFirstUser && newUser.created_at
+            ? "First user - admin rights granted"
+            : "User record created",
       });
     } else {
       const existingUser = await pool.query(
@@ -36,7 +40,7 @@ async function createUserRecord(req, res) {
 
       if (existingUser.rows.length === 0) {
         return res.status(409).json({
-          error: "Email already associated with another user account.",
+          error: "User with this UID could not be found or created.",
         });
       }
 
