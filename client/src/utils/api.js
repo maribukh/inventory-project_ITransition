@@ -1,4 +1,4 @@
-// client/src/utils/api.js
+// --- Файл: /client/src/utils/api.js ---
 
 import { auth } from "./firebase.client";
 
@@ -115,16 +115,13 @@ export async function updateInventory(inventoryId, data) {
   });
 }
 
-export async function syncSalesforce(data) {
-  return fetchWithAuth(`/api/user/sync-salesforce`, {
+export async function completeSalesforceSync(code, codeVerifier) {
+  return fetchWithAuth(`/api/user/salesforce-callback`, {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({ code, codeVerifier }),
   });
 }
 
-export async function completeSalesforceSync(code, codeVerifier, formData) {
-  return fetchWithAuth(`/api/user/salesforce-callback`, {
-    method: "POST",
-    body: JSON.stringify({ code, codeVerifier, formData }),
-  });
+export async function getSalesforceStatus() {
+  return fetchWithAuth(`/api/user/salesforce-status`);
 }

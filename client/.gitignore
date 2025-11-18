@@ -65,3 +65,7 @@ build/
 server/serviceAccountKey.json
 server/.env
 server/.env.*
+
+.env
+
+client/.env
