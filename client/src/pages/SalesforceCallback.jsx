@@ -1,5 +1,3 @@
-// client/src/pages/SalesforceCallback.jsx
-
 import React, { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { completeSalesforceSync } from "../utils/api";
@@ -25,23 +23,23 @@ export default function SalesforceCallback() {
     localStorage.removeItem("salesforce_form_data");
 
     if (code && codeVerifier) {
-      toast.loading("Finalizing Salesforce connection...");
+      toast.loading("Завершаем подключение к Salesforce...");
       completeSalesforceSync(code, codeVerifier, formData)
         .then((response) => {
           toast.dismiss();
-          toast.success(response.message || "Successfully connected!");
+          toast.success(response.message || "Успешно подключено!");
           navigate("/profile", { replace: true });
         })
         .catch((err) => {
           toast.dismiss();
-          toast.error(err.message || "Connection failed.");
+          toast.error(err.error || "Ошибка подключения.");
           navigate("/profile", { replace: true });
         });
     } else {
       const error = searchParams.get("error_description");
       toast.error(
         error ||
-          "Salesforce authentication failed. Code or verifier was missing on callback."
+          "Аутентификация Salesforce не удалась. Отсутствует код или верификатор."
       );
       navigate("/profile", { replace: true });
     }
@@ -49,9 +47,9 @@ export default function SalesforceCallback() {
 
   return (
     <div className="text-center p-12">
-      <h1 className="text-xl font-semibold">Connecting to Salesforce...</h1>
+      <h1 className="text-xl font-semibold">Подключение к Salesforce...</h1>
       <p className="text-gray-500">
-        Please wait, you will be redirected shortly.
+        Пожалуйста, подождите, вы будете перенаправлены.
       </p>
     </div>
   );

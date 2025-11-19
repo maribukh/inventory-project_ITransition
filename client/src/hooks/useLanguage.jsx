@@ -39,6 +39,18 @@ export function useLanguage() {
 
 export const translations = {
   en: {
+    userProfile: "User Profile",
+    crmConnection: "CRM Connection (Salesforce)",
+    crmConnectionDescription:
+      "Connect your account to external services like Salesforce CRM.",
+    connectToSalesforce: "Connect to Salesforce",
+    salesforceConnected: "Salesforce Connected",
+    loadingProfile: "Loading profile...",
+    salesforceClientIdError:
+      "Salesforce Client ID not found in client environment variables.",
+    initiateConnectionError:
+      "Failed to initiate Salesforce connection. See console for details.",
+    fetchStatusError: "Failed to fetch Salesforce status.",
     signIn: "Sign in",
     getStarted: "Get started",
     signOut: "Sign out",
@@ -131,6 +143,18 @@ export const translations = {
     readOnly: "Read Only",
   },
   ru: {
+    userProfile: "Профиль пользователя",
+    crmConnection: "Подключение к CRM (Salesforce)",
+    crmConnectionDescription:
+      "Подключите ваш аккаунт к внешним сервисам, таким как Salesforce CRM.",
+    connectToSalesforce: "Подключить к Salesforce",
+    salesforceConnected: "Salesforce подключен",
+    loadingProfile: "Загрузка профиля...",
+    salesforceClientIdError:
+      "Salesforce Client ID не найден в переменных окружения клиента.",
+    initiateConnectionError:
+      "Не удалось начать подключение к Salesforce. См. консоль.",
+    fetchStatusError: "Не удалось получить статус подключения Salesforce.",
     signIn: "Войти",
     getStarted: "Начать",
     signOut: "Выйти",

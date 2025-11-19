@@ -115,10 +115,10 @@ export async function updateInventory(inventoryId, data) {
   });
 }
 
-export async function completeSalesforceSync(code, codeVerifier) {
+export async function completeSalesforceSync(code, codeVerifier, formData) {
   return fetchWithAuth(`/api/user/salesforce-callback`, {
     method: "POST",
-    body: JSON.stringify({ code, codeVerifier }),
+    body: JSON.stringify({ code, codeVerifier, formData }),
   });
 }
 
