@@ -1,5 +1,3 @@
-// --- Файл: /server/src/controllers/userController.js ---
-
 import axios from "axios";
 import pool from "../utils/db.js";
 
@@ -10,7 +8,6 @@ const REDIRECT_URI = process.env.CLIENT_URL
   ? `${process.env.CLIENT_URL}/salesforce/callback`
   : "http://localhost:3000/salesforce/callback";
 
-// НОВАЯ ФУНКЦИЯ для проверки статуса
 async function getSalesforceStatus(req, res) {
   try {
     const { uid } = req.user;
@@ -32,7 +29,7 @@ async function getSalesforceStatus(req, res) {
 
 async function handleSalesforceCallback(req, res) {
   try {
-    const { code, codeVerifier } = req.body;
+    const { code, codeVerifier, formData } = req.body;
     const { email, uid } = req.user;
 
     if (!code || !codeVerifier) {
@@ -66,17 +63,8 @@ async function handleSalesforceCallback(req, res) {
     });
 
     if (existingContactResponse.data.totalSize === 0) {
-      const userInfoResponse = await axios.get(
-        `${instance_url}/services/oauth2/userinfo`,
-        { headers }
-      );
-      const sfUser = userInfoResponse.data;
-
       let accountId;
-      const accountName =
-        sfUser.name && sfUser.name.trim() !== ""
-          ? `${sfUser.name}'s Organization`
-          : `${email}'s Organization`;
+      const accountName = formData.company || `${email}'s Organization`;
 
       const accountSearchQuery = `SELECT Id FROM Account WHERE Name = '${accountName}' LIMIT 1`;
       const accountSearchUrl = `${instance_url}/services/data/v59.0/query?q=${encodeURIComponent(
@@ -106,8 +94,8 @@ async function handleSalesforceCallback(req, res) {
       await axios.post(
         `${instance_url}/services/data/v59.0/sobjects/Contact`,
         {
-          LastName: sfUser.family_name || email.split("@")[0],
-          FirstName: sfUser.given_name || "User",
+          LastName: formData.lastName || email.split("@")[0],
+          FirstName: formData.firstName || "User",
           Email: email,
           AccountId: accountId,
           External_ID__c: uid,
@@ -116,7 +104,6 @@ async function handleSalesforceCallback(req, res) {
       );
     }
 
-    // ОБНОВЛЯЕМ СТАТУС В НАШЕЙ БД
     await pool.query(
       "UPDATE users SET is_salesforce_connected = TRUE WHERE uid = $1",
       [uid]
