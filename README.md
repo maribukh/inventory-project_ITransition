@@ -4,7 +4,7 @@ Inventoro is a full-stack web application for flexible and powerful inventory ma
 
 This version features a key integration with Salesforce, enabling users to sync their profile data directly into a CRM for customer relationship management.
 
-**Live Demo:** [https://maribukhaidze-inventory.onrender.com](https://maribukhaidze-inventory.onrender.com)
+**Live Demo:** https://inventory-client-yh25.onrender.com/
 
 *(Note: The first load might be slow as the free-tier services on Render spin up.)*
 
