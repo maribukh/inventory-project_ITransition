@@ -1,165 +1,61 @@
-Inventory Management System
+# Inventoro - Inventory Management System
 
-This is a full-stack web application for inventory management, built with the PERN stack (PostgreSQL, Express, React, Node.js) and Firebase for authentication. It allows users to create custom inventories, define unique fields for them, and manage items within those inventories. The application also features a complete admin panel for user and system management.
+Inventoro is a full-stack web application for flexible and powerful inventory management. It allows users to create, manage, and share inventories with custom fields, supported by a modern tech stack including React, Node.js, and PostgreSQL.
 
-Features
+This version features a key integration with Salesforce, enabling users to sync their profile data directly into a CRM for customer relationship management.
 
-User Authentication: Secure user registration and login (Email/Password + Google Sign-In) managed by Firebase Authentication.
+**Live Demo:** [https://maribukhaidze-inventory.onrender.com](https://maribukhaidze-inventory.onrender.com)
 
-Inventory Management: Users can create, view, and manage their own inventories.
+*(Note: The first load might be slow as the free-tier services on Render spin up.)*
 
-Public/Private Inventories: Users can set inventories as "Public" (read-only for all users) or "Private" (visible only to the creator).
+---
 
-Custom Field System: When creating an inventory, users can define a custom schema of up to 15 fields (3 for each type: string, text, number, boolean, link).
+## Features
 
-Item Management: Full CRUD (Create, Read, Update, Delete) functionality for items within an inventory.
+-   **User Authentication:** Secure user registration and login using Firebase Authentication (Email/Password & Google).
+-   **Inventory Management (CRUD):** Create, read, update, and delete inventories.
+-   **Custom Fields:** Define custom data structures for each inventory (supporting text, numbers, booleans, links).
+-   **Item Management (CRUD):** Add, edit, and delete items within an inventory.
+-   **Public & Private Inventories:** Share inventories publicly (read-only) or keep them private.
+-   **Global Search:** Full-text search across all accessible inventories.
+-   **Admin Panel:** A dedicated dashboard for administrators to manage users and view system statistics.
+-   **Salesforce Integration:** Connect user profiles to Salesforce to create `Account` and `Contact` records via a secure OAuth 2.0 PKCE flow.
+-   **Multilingual Support:** Switch between English and Russian languages.
+-   **Dark/Light Mode:** Theme support for user comfort.
 
-Toolbar-Based Controls: Item editing and deletion are handled via a dynamic toolbar, supporting single and bulk operations.
+---
 
-Admin Dashboard: A separate, protected route for administrators (/admin) with features to:
+## Tech Stack
 
-View all users in the system with pagination.
+-   **Frontend:** React, React Router, TailwindCSS, Framer Motion, React Query, Firebase SDK, Axios
+-   **Backend:** Node.js, Express.js, PostgreSQL, Firebase Admin SDK
+-   **Deployment & Services:** Render (Static Site & Web Service), Render PostgreSQL, Firebase, Salesforce
 
-Block, unblock, grant, or revoke admin privileges for any user.
+---
 
-View a complete list of all inventories created on the platform.
+## Local Setup Instructions
 
-Full-Text Search: A global, high-performance search bar that uses PostgreSQL's full-text search (FTS) to find items across all accessible inventories.
+To run this project on your local machine, follow these steps.
 
-Multi-Language Support: The UI supports both English (en) and Russian (ru), managed via a React Context.
+### Prerequisites
 
-Dark/Light Mode: Full application themeing for dark and light modes, with user preference saved to local storage.
+-   Node.js (v18+)
+-   npm
+-   A running local instance of PostgreSQL
 
-Tech Stack
+### 1. Clone the Repository
 
-Frontend (Client)
-
-React 18: For building the user interface.
-
-React Router: For client-side routing.
-
-React Query (TanStack Query): For server state management, caching, and data fetching.
-
-Tailwind CSS: For all styling and UI components.
-
-Firebase (Client SDK): For handling user authentication.
-
-Backend (Server)
-
-Node.js: JavaScript runtime environment.
-
-Express.js: Web application framework for building the REST API.
-
-PostgreSQL: Relational database for all application data.
-
-node-postgres (pg): PostgreSQL client for Node.js.
-
-Firebase Admin SDK: For verifying user tokens and managing users from the backend.
-
-CORS, dotenv: Standard middleware and environment variable management.
-
-Database Schema
-
-The application relies on three main SQL tables:
-
-users:
-
-Stores user information linked to their Firebase UID.
-
-Fields: uid, email, is_admin, is_blocked.
-
-inventories:
-
-Stores each inventory's details, ownership (user_id), and visibility (is_public).
-
-Contains columns for all possible custom fields (custom_string1_name, custom_string1_state, etc.).
-
-items:
-
-Stores individual items linked to an inventory_id.
-
-Contains all possible custom data columns (custom_string1, custom_text1, etc.) and a search_text column for FTS.
-
-Getting Started
-
-To run this project locally, you will need to set up the server, the client, and the database.
-
-1. Prerequisites
-
-Node.js (v18 or later)
-
-npm
-
-A running PostgreSQL database
-
-A Firebase project with Authentication (Email/Password and Google) enabled.
-
-2. Clone the Repository
-
-git clone [https://github.com/maribukh/inventory-project_ITransition.git](https://github.com/maribukh/inventory-project_ITransition.git)
+git clone https://github.com/maribukh/inventory-project_ITransition.git
 cd inventory-project_ITransition
 
-
-3. Server Setup (Backend)
-
-Navigate to the server directory:
-
-cd server
-
-
-Install dependencies:
-
-npm install
-
-
-Create a .env file in the server directory and add your environment variables:
-
-# Example .env file
-DATABASE_URL="postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@localhost:5432/YOUR_DB_NAME"
-PORT=4000
-
-
-Download your serviceAccountKey.json from your Firebase project settings and place it in the server directory.
-
-4. Database Setup
-
-Connect to your PostgreSQL instance.
-
-Run the SQL scripts provided in the repository (or in the project description) to create the users, inventories, and items tables.
-
-Important: Run the following command to add the is_public column required by the application:
-
-ALTER TABLE inventories
-ADD COLUMN is_public BOOLEAN DEFAULT FALSE;
-
-
-5. Client Setup (Frontend)
-
-From the root directory, navigate to the client:
-
-cd client
-
-
-Install dependencies:
-
-npm install
-
-
-Rename firebase.config.js.example to firebase.config.js (or ensure firebase.config.js exists) and fill it with your Firebase project's client-side configuration.
-
-6. Running the Application
-
-Run the Server:
-
-# From the /server directory
-npm run dev
-
-Demo: https://inventory-client-yh25.onrender.com/
-Server: https://inventory-server-lb56.onrender.com/
-
-The server will be running on http://localhost:4000.
-
-Run the Client:
-
-# From the /client directory
-npm run dev
+**2. Backend Setup (/server)**
+Navigate to the server directory: cd server
+Install dependencies: npm install
+Create an .env file and populate it with your credentials for DATABASE_URL, FIREBASE_SERVICE_ACCOUNT, SF_CLIENT_ID, SF_CLIENT_SECRET, and CLIENT_URL.
+Connect to your local PostgreSQL instance and run the script located at /server/setup.sql to create all tables and seed them with demo data.
+Run the server: npm run dev (runs on http://localhost:4000)
+**3. Frontend Setup (/client)**
+Navigate to the client directory: cd client
+Install dependencies: npm install
+Create an .env file and populate it with VITE_API_BASE (your backend URL), VITE_CLIENT_URL (your frontend URL), and VITE_SALESFORCE_CLIENT_ID.
+Run the client: npm run dev (runs on http://localhost:5173)
